@@ -1,4 +1,4 @@
-import { LitElement } from "lit";
+import { LitElement, ReactiveElement } from "lit";
 
 export type StylerConfig = {
   card?: boolean;
@@ -6,7 +6,7 @@ export type StylerConfig = {
   size?: number;
 }
 
-export type StylerElement = LitElement & {
+export type StylerElement = LitElement & ReactiveElement & {
   config?: { styler?: StylerConfig }
   _config?: { styler?: StylerConfig }
   _styler?: StylerConfig & { parent_card?: boolean };
@@ -68,6 +68,18 @@ function patch(el: StylerElementConstructor) {
     origUpdated?.call(this, props);
     check(this);
   };
+
+  (el as unknown as typeof LitElement).addInitializer((e: ReactiveElement) => {
+    const el = e as StylerElement;
+    const origGetCardSize = el.getCardSize;
+    el.getCardSize = function() {
+      if (this._config?.styler?.size) {
+        console.log("size", this._config.styler.size)
+        return this._config.styler.size;
+      }
+      return origGetCardSize?.call(el);
+    }
+  })
 }
 
 customElements.whenDefined("ha-card").then((el) => {
