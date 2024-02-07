@@ -1,97 +1,92 @@
-import { LitElement, ReactiveElement } from "lit";
+import type { CSSResult, LitElement, ReactiveElement } from "lit"
 
-export type StylerConfig = {
-  card?: boolean;
-  style?: string;
-  size?: number;
+type StylerConfig = {
+  card?: boolean
+  style?: string
+  size?: number
 }
 
-export type StylerElement = LitElement & ReactiveElement & {
+type StylerState = StylerConfig & { parent_card?: boolean }
+
+type StylerElement = LitElement & {
   config?: { styler?: StylerConfig }
   _config?: { styler?: StylerConfig }
-  _styler?: StylerConfig & { parent_card?: boolean };
-  getCardSize?: () => number | undefined;
+  _styler?: StylerState
+  getCardSize?: () => number | undefined
 }
 
-export type StylerElementConstructor = CustomElementConstructor & {
-  _stylered?: boolean;
-}
+const VERSION = "0.0.1" // x-release-please-version
+let CARD_CSS = ""
 
-const VERSION = "0.0.1"
-let CARD_CSS = "";
-
-function check(node?: StylerElement) {
-  if (!node || node._styler) return node?._styler;
-  const parent = check((
-    node instanceof ShadowRoot
-      ? node.host
-      : node.parentElement ?? node.parentNode) as StylerElement | undefined
-  );
-  node._styler = { ...node?._config?.styler, parent_card: parent?.card ?? parent?.parent_card };
-  fix(node);
-  return node._styler;
+// Check if we need to apply styles to the element or any of its ancestors
+// This function will be called only once per element
+function check(node?: StylerElement): StylerState | undefined {
+  if (!node || node._styler) return node?._styler
+  const parent = check(
+    (node instanceof ShadowRoot ? node.host : node.parentElement ?? node.parentNode) as
+      | StylerElement
+      | undefined
+  )
+  node._styler = { ...node?._config?.styler, parent_card: parent?.card ?? parent?.parent_card }
+  fix(node)
+  return node._styler
 }
 
 function fix(node: StylerElement) {
-  const config = node._styler;
-  if (!config) return;
+  const config = node._styler
+  if (!config) return
 
+  // Should we style this as a card?
   if (config.card) {
-    const styleElement = document.createElement("style");
-    styleElement.innerHTML = CARD_CSS;
-    node.shadowRoot?.appendChild(styleElement);
+    const styleElement = document.createElement("style")
+    styleElement.innerHTML = CARD_CSS
+    node.shadowRoot?.appendChild(styleElement)
   }
 
+  // Do we have any custom styles to apply?
   if (config.style) {
-    const styleElement = document.createElement("style");
-    styleElement.innerHTML = config.style;
-    node.shadowRoot?.appendChild(styleElement);
+    const styleElement = document.createElement("style")
+    styleElement.innerHTML = config.style
+    node.shadowRoot?.appendChild(styleElement)
   }
 
-  if (
-    node.tagName == "HA-CARD" &&
-    (config.card === false || config.parent_card)
-  ) {
-    node.style.transition = "none";
-    node.style.border = "none";
-    node.style.boxShadow = "none";
-    node.style.background = "none";
+  // Remove the card styles if any ancestor is a card
+  if (node.tagName == "HA-CARD" && (config.card === false || config.parent_card)) {
+    node.style.transition = "none"
+    node.style.border = "none"
+    node.style.boxShadow = "none"
+    node.style.background = "none"
     // node.style.transition = '';
   }
 }
 
-function patch(el: StylerElementConstructor) {
-  if (el._stylered) return;
-  el._stylered = true;
-  const origUpdated = el.prototype.updated;
-  el.prototype.updated = function(props: Map<string, any>) {
-    origUpdated?.call(this, props);
-    check(this);
-  };
+void customElements.whenDefined("ha-card").then((el) => {
+  const card = el as typeof LitElement
 
-  (el as unknown as typeof LitElement).addInitializer((e: ReactiveElement) => {
-    const el = e as StylerElement;
-    const origGetCardSize = el.getCardSize;
-    el.getCardSize = function() {
-      if (this._config?.styler?.size) {
-        console.log("size", this._config.styler.size)
-        return this._config.styler.size;
-      }
-      return origGetCardSize?.call(el);
+  // Store the original styles for an ha-card
+  CARD_CSS = (card.styles as CSSResult).cssText
+  CARD_CSS += ":host{overflow:hidden}"
+
+  // Get the LitElement class used by Home Assistant
+  const Lit = Object.getPrototypeOf(card) as typeof LitElement
+
+  // Add a new initializer to the LitElement class
+  Lit.addInitializer((re: ReactiveElement) => {
+    const el = re as StylerElement
+
+    // Check if we need to apply any styles when the host is updated
+    el.addController({
+      hostUpdated() {
+        check(el)
+      },
+    })
+
+    // Allow overriding the card size
+    const origGetCardSize = el.getCardSize
+    el.getCardSize = function () {
+      return this._config?.styler?.size ?? origGetCardSize?.call(el)
     }
   })
-}
+})
 
-customElements.whenDefined("ha-card").then((el) => {
-  const card = el as typeof LitElement;
-  CARD_CSS = card.styles?.cssText ?? "";
-  CARD_CSS += ":host{overflow:hidden}";
-  const LitElement = Object.getPrototypeOf(card) as typeof LitElement;
-  patch(LitElement);
-  patch(card);
-});
-
-console.info(
-  `%cStyler v${VERSION} is installed`,
-  "color: blue; font-weight: bold"
-);
+console.info(`%cStyler v${VERSION} is installed`, "color: blue; font-weight: bold")
