@@ -21,7 +21,18 @@ let CARD_CSS = ""
 // Check if we need to apply styles to the element or any of its ancestors
 // This function will be called only once per element
 function check(node?: StylerElement): StylerState | undefined {
+  // When this is a top-level preview card, delete any custom style child elements from the shadow root
+  if (node?.parentElement?.tagName == "HUI-CARD-PREVIEW") {
+    node._styler = undefined
+    for (const child of node.shadowRoot?.children ?? []) {
+      if (child.tagName == "STYLE") {
+        child.remove()
+      }
+    }
+  }
+
   if (!node || node._styler) return node?._styler
+
   const parent = check(
     (node instanceof ShadowRoot ? node.host : node.parentElement ?? node.parentNode) as
       | StylerElement
