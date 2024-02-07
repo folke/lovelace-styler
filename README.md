@@ -7,11 +7,25 @@ Plugin to customize the styling of Lovelace cards.
 - style any component as a card (like `vertical-stack`, `grid`, `layout-card`, ...)
 - remove card styling from any card
 - apply custom CSS to any component
-- minimal overhead
+- override a component's `getCardSize` method.
+  Useful for custom cards that don't calculate their size correctly.
+- similar plugins:
+  - [card-mod](https://github.com/thomasloven/lovelace-card-mod)
+  - [vertical-stack-in-card](https://github.com/ofekashery/vertical-stack-in-card)
+  - [stack-in-card](https://github.com/custom-cards/stack-in-card)
+  - [lovelace-canary](https://github.com/jcwillox/lovelace-canary)
+
+## ⚡ Performance
+
+Great care has been taken to minimize the overhead of this plugin.
+This plugin works by hooking into [Lit](https://lit.dev)'s [reactive life-cycle](https://lit.dev/docs/components/lifecycle/#reactive-update-cycle)
+using [ReactiveElement.addInitializer](https://lit.dev/docs/components/lifecycle/#addInitializer)
+and a custom [Reactive Controller](https://lit.dev/docs/composition/controllers/#lifecycle)
+that only runs once per card in the `hostUpdated` live-cycle callback.
 
 ## 🚀 Usage
 
-Style any component as a card:
+### Style any component as a card
 
 ```yaml
 type: vertical-stack
@@ -31,7 +45,7 @@ cards: ...
 
 ```
 
-Remove card styling from any card:
+### Remove card styling from any card
 
 ```yaml
 type: mushroom-light-card
@@ -40,7 +54,7 @@ styler:
   card: false
 ```
 
-Apply custom CSS to any component:
+### Apply custom CSS to any component
 
 ```yaml
 type: mushroom-light-card
@@ -50,6 +64,17 @@ styler:
     .card {
       border-color: red;
     }
+```
+
+### Override a component's `getCardSize` method
+
+Useful for custom cards that don't calculate their size correctly,
+or to make the masonry layout work properly.
+
+```yaml
+type: custom:any-card
+styler:
+  size: 8
 ```
 
 ## 🏠 Advanced Example
