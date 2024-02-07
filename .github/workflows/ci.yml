@@ -43,6 +43,7 @@ jobs:
         id: release
         with:
           release-type: node
+          extra-files: src/styler.ts
 
       - name: Upload Release Artifact
         if: ${{ steps.release.outputs.release_created }}
