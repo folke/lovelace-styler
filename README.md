@@ -54,6 +54,8 @@ styler:
 
 ## 🏠 Advanced Example
 
+![image](https://github.com/folke/lovelace-styler/assets/292349/aaf1ea16-f0f9-4ea9-8412-3d45a98b1dd9)
+
 ```yaml
 square: false
 type: grid
