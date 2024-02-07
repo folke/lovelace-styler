@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github.com/folke/lovelace-styler/compare/v1.2.0...v1.2.1) (2024-02-07)
+
+
+### Bug Fixes
+
+* always update the top-level card when in the preview editor ([845106c](https://github.com/folke/lovelace-styler/commit/845106cdb62855ab74a5cfebfa13d00e7262b70d))
+* update version in src/styler.ts ([da73298](https://github.com/folke/lovelace-styler/commit/da732988173f1c78630ba914d96852745d3106c6))
+
 ## [1.2.0](https://github.com/folke/lovelace-styler/compare/v1.1.0...v1.2.0) (2024-02-07)
 
 
