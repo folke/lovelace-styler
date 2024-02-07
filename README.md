@@ -2,6 +2,8 @@
 
 Plugin to customize the styling of Lovelace cards.
 
+<img src="https://github.com/folke/lovelace-styler/assets/292349/6314dc34-4750-4cf4-b7b4-c3d0b6132486">
+
 ## ✨ Features
 
 - style any component as a card (like `vertical-stack`, `grid`, `layout-card`, ...)
@@ -79,7 +81,7 @@ styler:
 
 ## 🏠 Advanced Example
 
-![image](https://github.com/folke/lovelace-styler/assets/292349/6314dc34-4750-4cf4-b7b4-c3d0b6132486)
+The code below was used to create the two room cards in the screenshot above.
 
 ```yaml
 square: false
