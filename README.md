@@ -25,6 +25,19 @@ using [ReactiveElement.addInitializer](https://lit.dev/docs/components/lifecycle
 and a custom [Reactive Controller](https://lit.dev/docs/composition/controllers/#lifecycle)
 that only runs once per card in the `hostUpdated` live-cycle callback.
 
+### 📦 Installation via HACS
+
+Have [HACS](https://hacs.xyz/) installed, this will allow you to update easily.
+
+- Adding **Styler** to HACS can be done using this button:
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=folke&repository=lovelace-styler&category=lovelace)
+
+(If the button above doesn't work, add `https://github.com/folke/lovelace-styler` as a custom repository of type Integration in HACS.)
+
+- Click Download on the HACS page
+- Reload the Home Assistant web page
+
 ## 🚀 Usage
 
 ### Style any component as a card
