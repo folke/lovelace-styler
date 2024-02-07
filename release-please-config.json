@@ -1,4 +1,5 @@
 {
-  "release-type": "node",
-  "extra-files": "src/styler.ts"
+  "packages": {
+    ".": {}
+  }
 }
