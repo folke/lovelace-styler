@@ -1,6 +1,6 @@
 {
   "name": "styler",
-  "version": "0-dev",
+  "version": "1.0.0",
   "author": "Folke Lemaitre",
   "license": "MIT",
   "type": "module",
@@ -11,7 +11,7 @@
     "lint": "eslint . --cache --max-warnings=0 --ext js,cjs,mjs,jsx,ts,tsx",
     "lint:fix": "pnpm run lint --fix",
     "format": "prettier --cache --write .",
-    "format:check": "prettier --cache --check ."
+    "format:check": "prettier --cache --check src"
   },
   "dependencies": {
     "lit": "3.1.2"

@@ -1,0 +1,51 @@
+name: "CI"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Setup pnpm"
+        uses: pnpm/action-setup@v2
+
+      - name: "Setup node"
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: ${{ !env.ACT && 'pnpm' || '' }}
+
+      - name: "Install dependencies"
+        run: pnpm install
+
+      - name: "Run Lint"
+        run: pnpm run lint
+
+      - name: "Typecheck"
+        run: pnpm run check
+
+      - name: "Check format"
+        run: pnpm run format:check
+
+      - name: "Run Build"
+        run: pnpm run build
+
+      - uses: google-github-actions/release-please-action@v4
+        if: ${{ github.ref == 'refs/heads/main' }}
+        id: release
+        with:
+          release-type: node
+
+      - name: Upload Release Artifact
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload ${{ steps.release.outputs.tag_name }} ./dist/*
