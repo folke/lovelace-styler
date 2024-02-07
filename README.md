@@ -25,7 +25,7 @@ using [ReactiveElement.addInitializer](https://lit.dev/docs/components/lifecycle
 and a custom [Reactive Controller](https://lit.dev/docs/composition/controllers/#lifecycle)
 that only runs once per card in the `hostUpdated` live-cycle callback.
 
-### 📦 Installation via HACS
+## 📦 Installation via HACS
 
 Have [HACS](https://hacs.xyz/) installed, this will allow you to update easily.
 
