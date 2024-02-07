@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/folke/lovelace-styler/compare/v1.1.0...v1.2.0) (2024-02-07)
+
+
+### Features
+
+* added image ([b380acd](https://github.com/folke/lovelace-styler/commit/b380acdef3c0e16a4dbebb2fcc70769798893c62))
+
 ## [1.1.0](https://github.com/folke/lovelace-styler/compare/v1.0.0...v1.1.0) (2024-02-07)
 
 
