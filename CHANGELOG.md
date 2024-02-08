@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.1](https://github.com/folke/lovelace-styler/compare/v1.4.0...v1.4.1) (2024-02-08)
+
+
+### Bug Fixes
+
+* properly update when rendering inside the card editor ([b9519b7](https://github.com/folke/lovelace-styler/commit/b9519b7032d649356cccfc9733a926bc01601186))
+* remove card style when an ancestor has `card: false` ([b824273](https://github.com/folke/lovelace-styler/commit/b8242731c6ce36cb993e11206715276292b9403d))
+
 ## [1.4.0](https://github.com/folke/lovelace-styler/compare/v1.3.0...v1.4.0) (2024-02-07)
 
 
