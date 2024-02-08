@@ -38,7 +38,10 @@ function check(node?: StylerElement): StylerState | undefined {
       | StylerElement
       | undefined
   )
-  node._styler = { ...node?._config?.styler, parent_card: parent?.card ?? parent?.parent_card }
+  node._styler = {
+    ...node?._config?.styler,
+    parent_card: parent?.card ?? parent?.parent_card,
+  }
   fix(node)
   return node._styler
 }
@@ -61,8 +64,14 @@ function fix(node: StylerElement) {
     node.shadowRoot?.appendChild(styleElement)
   }
 
-  // Remove the card styles if any ancestor is a card
-  if (node.tagName == "HA-CARD" && (config.card === false || config.parent_card)) {
+  // Remove the card styles if either:
+  // - the parent is styled as a card
+  // - the parent doesn't want to be styled as a card
+  // - the card itself doesn't want to be styled as a card
+  if (
+    node.tagName == "HA-CARD" &&
+    (config.card === false || config.parent_card || config.parent_card === false)
+  ) {
     node.style.transition = "none"
     node.style.border = "none"
     node.style.boxShadow = "none"
