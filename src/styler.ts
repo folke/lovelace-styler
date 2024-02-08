@@ -19,7 +19,7 @@ type StylerElement = LitElement & {
   getCardSize?: () => number | undefined
 }
 
-const VERSION = "1.4.0" // x-release-please-version
+const VERSION = "1.4.1" // x-release-please-version
 let CARD_CSS = ""
 
 // Check if we need to apply styles to the element or any of its ancestors
