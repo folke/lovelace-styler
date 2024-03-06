@@ -89,202 +89,98 @@ or to make the masonry layout work properly.
 ```yaml
 type: custom:any-card
 styler:
-  size: 8
+  card_size: 8
 ```
+
+### Override a component's `getGridSize` method
+
+This allows you to override the grid size of any card for the `sections` view.
+
+```yaml
+type: custom:any-card
+styler:
+  grid_size: [2, 2]
+```
+
+## Custom Cards
+
+Styler comes with some pre-made custom cards that you can use to style your UI.
+
+- `custom:tile-icon`: exactly the same as a [Tile Card](https://www.home-assistant.io/dashboards/tile/), but just the icon.
+- `custom:vertical-stack-COLS-ROWS`: a vertical stack card with a predefined grid size of COLSxROWS.
+  For example `custom:vertical-stack-2-2` is a vertical stack with a grid size of 2x2.
+- `custom:horizontal-stack-COLS-ROWS`: a horizontal stack card with a predefined grid size of COLSxROWS.
+  For example `custom:horizontal-stack-2-2` is a horizontal stack with a grid size of 2x2.
+- `custom:grid-COLS-ROWS`: a grid card with a predefined grid size of COLSxROWS.
+  For example `custom:grid-2-2` is a grid with a grid size of 2x2.
 
 ## 🏠 Advanced Example
 
 The code below was used to create the two room cards in the screenshot above.
+The example code uses the [Mushroom Custom Cards](https://github.com/piitaya/lovelace-mushroom).
+
+### Living Room Card
 
 ```yaml
-square: false
-type: grid
-columns: 2
+type: custom:horizontal-stack-2-2
 cards:
-  - type: custom:layout-card
+  - type: custom:mushroom-template-card
+    primary: Living Room
+    secondary: "{{ states('sensor.netatmo_living_room_temperature_2') | round(0) }} °C"
+    icon: mdi:sofa
+    icon_color: pink
+    tap_action:
+      action: navigate
+      navigation_path: downstairs
+  - type: grid
+    columns: 1
+    square: false
     styler:
-      card: true
-    layout_type: custom:grid-layout
-    layout:
-      grid-template-columns: 1fr auto
-      grid-template-areas: |
-        "title buttons"
-        "icon buttons"
+      style: |
+        :host {
+          flex: 0 0 auto !important;
+          margin: 12px;
+        }
     cards:
-      - type: custom:mushroom-template-card
-        primary: Lounge
-        secondary: >-
-          {{ states('sensor.unknown_70_ee_50_a9_99_52_living_temperature') |
-          round(0) }} °C
-        tap_action:
-          action: navigate
-          navigation_path: downstairs
-        view_layout:
-          grid-area: title
-        styler:
-          style: |
-            ha-card {
-              min-height: 66px;
-            }
-      - type: custom:mushroom-template-card
-        icon: mdi:sofa
-        tap_action:
-          action: navigate
-          navigation_path: downstairs
-        icon_color: pink
-        secondary_info: none
-        primary_info: none
-        view_layout:
-          grid-area: icon
-        styler:
-          style: |
-            ha-card {
-              margin-right: -25px;
-              margin-top: -40px;
-              left: -25px;
-              bottom: -30px;
-              --spacing: 0;
-              --icon-size: 130px;
-            }
-      - type: vertical-stack
-        view_layout:
-          grid-area: buttons
-        cards:
-          - type: custom:mushroom-light-card
-            entity: light.group_lounge
-            primary_info: none
-            secondary_info: none
-            styler:
-              style: |
-                ha-card {
-                  --spacing: 6px 6px 0 0;
-                }
-          - type: custom:mushroom-entity-card
-            entity: sensor.unknown_70_ee_50_a9_99_52_living_temperature
-            primary_info: none
-            secondary_info: none
-            icon_color: red
-            styler:
-              style: |
-                ha-card {
-                  --spacing: 6px 6px 0 0;
-                }
-          - type: custom:mushroom-entity-card
-            entity: binary_sensor.presence_living_room
-            primary_info: none
-            secondary_info: none
-            styler:
-              style: |
-                ha-card {
-                  --spacing: 6px 6px 0 0;
-                }
-  - type: custom:layout-card
-    layout_type: custom:grid-layout
+      - type: custom:tile-icon
+        entity: light.group_lounge
+      - type: custom:tile-icon
+        entity: binary_sensor.presence_living_room
+        color: blue
+```
+
+### Upstairs Card
+
+```yaml
+type: custom:horizontal-stack-2-2
+cards:
+  - type: custom:mushroom-template-card
+    primary: Upstairs
+    secondary: "{{ states('sensor.netatmo_upstairs_temperature_3') | round(0) }} °C"
+    icon: mdi:bed
+    icon_color: brown
+    tap_action:
+      action: navigate
+      navigation_path: downstairs
+  - type: grid
+    columns: 2
+    square: false
     styler:
-      card: true
-    layout:
-      grid-template-columns: minmax(10px, 1fr) auto
-      grid-template-areas: |
-        "title buttons"
-        "icon buttons"
+      style: |
+        :host {
+          flex: 0 0 auto !important;
+          margin: 12px;
+        }
     cards:
+      - type: custom:tile-icon
+        entity: alarm_control_panel.upstairs
+      - type: custom:tile-icon
+        entity: light.group_all_upstairs
       - type: custom:mushroom-template-card
-        primary: Upstairs
-        secondary: >-
-          {{
-          states('sensor.unknown_70_ee_50_a9_99_52_1e_verdieping_temperature') |
-          round(0) }} °C
-        tap_action:
-          action: navigate
-          navigation_path: upstairs
-        view_layout:
-          grid-area: title
-        styler:
-          style: |
-            ha-card {
-              border:none;
-              min-height: 66px;
-            }
+      - type: custom:tile-icon
+        entity: binary_sensor.presence_upstairs
+        color: blue
       - type: custom:mushroom-template-card
-        icon: mdi:bed
-        tap_action:
-          action: navigate
-          navigation_path: upstairs
-        icon_color: indigo
-        secondary_info: none
-        primary_info: none
-        view_layout:
-          grid-area: icon
-        styler:
-          style: |
-            ha-card {
-              border: none;
-              margin-right: -25px;
-              margin-top: -40px;
-              left: -25px;
-              bottom: -30px;
-              --spacing: 0;
-              --icon-size: 130px;
-            }
-      - type: grid
-        columns: 2
-        view_layout:
-          grid-area: buttons
-        cards:
-          - type: custom:mushroom-alarm-control-panel-card
-            entity: alarm_control_panel.upstairs
-            primary_info: none
-            secondary_info: none
-            fill_container: true
-            styler:
-              style: |
-                ha-card {
-                  --spacing: 6px 6px 0 0;
-                }
-          - type: custom:mushroom-light-card
-            entity: light.group_all_upstairs
-            primary_info: none
-            layout: vertical
-            secondary_info: none
-            styler:
-              style: |
-                ha-card {
-                  --spacing: 6px 6px 0 0;
-                }
-          - type: custom:mushroom-fan-card
-            entity: fan.ventilos
-            icon_animation: true
-            primary_info: none
-            secondary_info: none
-            tap_action:
-              action: navigate
-              navigation_path: upstairs
-            layout: vertical
-            styler:
-              style: |
-                ha-card {
-                  --spacing: 6px 6px 0 0;
-                }
-          - type: custom:mushroom-entity-card
-            entity: sensor.unknown_70_ee_50_a9_99_52_1e_verdieping_temperature
-            primary_info: none
-            secondary_info: none
-            layout: vertical
-            icon_color: red
-            styler:
-              style: |
-                ha-card {
-                  --spacing: 6px 6px 0 0;
-                }
-          - type: custom:gap-card
-          - type: custom:mushroom-entity-card
-            entity: binary_sensor.presence_upstairs
-            primary_info: none
-            secondary_info: none
-            layout: vertical
-            styler:
-              style: |
-                ha-card {
-                  --spacing: 6px 6px 0 0;
-                }
+      - type: custom:tile-icon
+        entity: fan.ventilos
 ```
