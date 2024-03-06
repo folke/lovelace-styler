@@ -117,6 +117,24 @@ Styler comes with some pre-made custom cards that you can use to style your UI.
 - `custom:grid-COLS-ROWS`: a grid card with a predefined grid size of COLSxROWS.
   For example `custom:grid-2-2` is a grid with a grid size of 2x2.
 
+## Configuring the sections view
+
+With styler, it's fairly easy to configure some options related to the sections view.
+
+The example below sets the grid gap to 10px and the maximum number of sections to 2.
+
+```yaml
+title: Home
+type: sections
+styler:
+  style: |
+    .container {
+      --grid-gap: 10px !important;
+      --grid-max-section-count: 2 !important;
+    }
+sections: ...
+```
+
 ## 🏠 Advanced Example
 
 The code below was used to create the two room cards in the screenshot above.
