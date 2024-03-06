@@ -11,6 +11,9 @@ Plugin to customize the styling of Lovelace cards.
 - apply custom CSS to any component
 - override a component's `getCardSize` method.
   Useful for custom cards that don't calculate their size correctly.
+- override a component's `getGridSize` method.
+  Useful for custom cards that don't calculate their size correctly in the `sections` view.
+- helper custom cards for easy styling
 - similar plugins:
   - [card-mod](https://github.com/thomasloven/lovelace-card-mod)
   - [vertical-stack-in-card](https://github.com/ofekashery/vertical-stack-in-card)
