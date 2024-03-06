@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.5.0](https://github.com/folke/lovelace-styler/compare/v1.4.1...v1.5.0) (2024-03-06)
+
+
+### Features
+
+* better and more correct way of hooking into custom elements ([96bea02](https://github.com/folke/lovelace-styler/commit/96bea02b06b0d107c692e338d6cccc0402abe6bf))
+* helpers for dealing with grid cards ([fe90ca7](https://github.com/folke/lovelace-styler/commit/fe90ca79d5a46668f98a9ae003f936392b824a26))
+* refactor ALL THE THINGS ([b704cd2](https://github.com/folke/lovelace-styler/commit/b704cd2043f0cb01f4a7baf2b7412902d615451e))
+* simple tile-icon card ([e389fc5](https://github.com/folke/lovelace-styler/commit/e389fc5bdf9bf4f4746c967d196aa1e4ea14fc9c))
+* visual editor support ([f816040](https://github.com/folke/lovelace-styler/commit/f816040470a7448e041afdf144bce47db1ea9b29))
+
 ## [1.4.1](https://github.com/folke/lovelace-styler/compare/v1.4.0...v1.4.1) (2024-02-08)
 
 
