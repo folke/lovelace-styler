@@ -4,7 +4,7 @@ import { defineConfig } from "vite"
 export default defineConfig({
   build: {
     lib: {
-      entry: "src/styler.ts",
+      entry: "src/main.ts",
       formats: ["es"],
     },
   },
