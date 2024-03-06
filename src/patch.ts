@@ -8,12 +8,16 @@ function getCustomElements() {
   }))
 }
 
+function isCustomElement(el: Element | ShadowRoot): el is HTMLElement {
+  if (!(el instanceof HTMLElement)) return false
+  const name = el.tagName.toLowerCase()
+  return name.includes("-") && customElements.get(name) !== undefined
+}
+
 // Get all existing custom element instances on the page, including those recursively inside shadow roots
 function walk(element: Element | ShadowRoot, callback: (elem: HTMLElement) => void): void {
   // Check if the passed 'element' is actually a ShadowRoot. If it is, we need to get its host element to check if it's a custom element.
-  if (element instanceof HTMLElement && element.tagName.includes("-")) {
-    callback(element)
-  }
+  if (isCustomElement(element)) callback(element)
 
   // Get the children of the element
   const children = element instanceof Element ? element.children : element.host.shadowRoot?.children
