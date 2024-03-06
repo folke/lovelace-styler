@@ -37,10 +37,10 @@ function isPreview(node?: Node): boolean {
   return isPreview(parentNode)
 }
 
-function fix(node: CardElement) {
+function applyStyles(node: CardElement, force = false) {
   const isPreviewMode = node.editMode && isPreview(node)
 
-  if (node._styler && !isPreviewMode) return
+  if (!force && node._styler && !isPreviewMode) return
 
   const state = (node._styler = getState(node))
 
@@ -100,10 +100,13 @@ function attach(re: HTMLElement) {
   })
 
   if (isReactiveController(card)) {
+    let config = card._config?.styler
     // Check if we need to apply any styles when the host is updated
     card.addController({
       hostUpdated() {
-        fix(card)
+        // force the styles to be applied if the config has changed
+        applyStyles(card, config !== card._config?.styler)
+        config = card._config?.styler
       },
     })
     card.requestUpdate()
