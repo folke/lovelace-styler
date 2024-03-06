@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.1](https://github.com/folke/lovelace-styler/compare/v1.5.0...v1.5.1) (2024-03-06)
+
+
+### Bug Fixes
+
+* **patch:** make sure existing tags are real custom elements before patching ([057ca0b](https://github.com/folke/lovelace-styler/commit/057ca0bac9e44f276545b1ea4b1473dcb2188aab))
+* **styler:** always re-apply styles when a card's config changed ([177554f](https://github.com/folke/lovelace-styler/commit/177554f794a5ff30e079b8c2816286a000157746))
+
 ## [1.5.0](https://github.com/folke/lovelace-styler/compare/v1.4.1...v1.5.0) (2024-03-06)
 
 
