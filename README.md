@@ -144,6 +144,8 @@ The example code uses the [Mushroom Custom Cards](https://github.com/piitaya/lov
 
 ```yaml
 type: custom:horizontal-stack-2-2
+styler:
+  card: true
 cards:
   - type: custom:mushroom-template-card
     primary: Living Room
@@ -153,6 +155,14 @@ cards:
     tap_action:
       action: navigate
       navigation_path: downstairs
+    styler:
+      style: |
+        mushroom-state-info { min-height: 150px }
+        ha-card { --icon-size: 130px }
+        mushroom-shape-icon {
+          position: absolute;
+          margin: -20px -25px;
+        }
   - type: grid
     columns: 1
     square: false
@@ -174,6 +184,8 @@ cards:
 
 ```yaml
 type: custom:horizontal-stack-2-2
+styler:
+  card: true
 cards:
   - type: custom:mushroom-template-card
     primary: Upstairs
@@ -183,6 +195,14 @@ cards:
     tap_action:
       action: navigate
       navigation_path: downstairs
+    styler:
+      style: |
+        mushroom-state-info { min-height: 150px }
+        ha-card { --icon-size: 130px }
+        mushroom-shape-icon {
+          position: absolute;
+          margin: -20px -25px;
+        }
   - type: grid
     columns: 2
     square: false
