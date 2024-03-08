@@ -9,11 +9,6 @@ Plugin to customize the styling of Lovelace cards.
 - style any component as a card (like `vertical-stack`, `grid`, `layout-card`, ...)
 - remove card styling from any card
 - apply custom CSS to any component
-- override a component's `getCardSize` method.
-  Useful for custom cards that don't calculate their size correctly.
-- override a component's `getGridSize` method.
-  Useful for custom cards that don't calculate their size correctly in the `sections` view.
-- helper custom cards for easy styling
 - similar plugins:
   - [card-mod](https://github.com/thomasloven/lovelace-card-mod)
   - [vertical-stack-in-card](https://github.com/ofekashery/vertical-stack-in-card)
@@ -84,39 +79,6 @@ styler:
     }
 ```
 
-### Override a component's `getCardSize` method
-
-Useful for custom cards that don't calculate their size correctly,
-or to make the masonry layout work properly.
-
-```yaml
-type: custom:any-card
-styler:
-  card_size: 8
-```
-
-### Override a component's `getGridSize` method
-
-This allows you to override the grid size of any card for the `sections` view.
-
-```yaml
-type: custom:any-card
-styler:
-  grid_size: [2, 2]
-```
-
-## Custom Cards
-
-Styler comes with some pre-made custom cards that you can use to style your UI.
-
-- `custom:tile-icon`: exactly the same as a [Tile Card](https://www.home-assistant.io/dashboards/tile/), but just the icon.
-- `custom:vertical-stack-COLS-ROWS`: a vertical stack card with a predefined grid size of COLSxROWS.
-  For example `custom:vertical-stack-2-2` is a vertical stack with a grid size of 2x2.
-- `custom:horizontal-stack-COLS-ROWS`: a horizontal stack card with a predefined grid size of COLSxROWS.
-  For example `custom:horizontal-stack-2-2` is a horizontal stack with a grid size of 2x2.
-- `custom:grid-COLS-ROWS`: a grid card with a predefined grid size of COLSxROWS.
-  For example `custom:grid-2-2` is a grid with a grid size of 2x2.
-
 ## Configuring the sections view
 
 With styler, it's fairly easy to configure some options related to the sections view.
@@ -143,7 +105,9 @@ The example code uses the [Mushroom Custom Cards](https://github.com/piitaya/lov
 ### Living Room Card
 
 ```yaml
-type: custom:horizontal-stack-2-2
+type: horizontal-stack
+layout_options:
+  grid_columns: 2
 styler:
   card: true
 cards:
@@ -183,7 +147,9 @@ cards:
 ### Upstairs Card
 
 ```yaml
-type: custom:horizontal-stack-2-2
+type: horizontal-stack
+layout_options:
+  grid_columns: 2
 styler:
   card: true
 cards:

@@ -3,8 +3,6 @@ import type { LitElement } from "lit"
 export type StylerConfig = {
   card?: boolean
   style?: string
-  card_size?: number
-  grid_size?: [number, number]
 }
 
 export type StylerState = StylerConfig & {

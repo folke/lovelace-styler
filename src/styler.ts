@@ -1,7 +1,7 @@
 import type { CSSResult, LitElement } from "lit"
 import "./editor"
 
-import { Patcher, isReactiveController, override } from "./patch"
+import { Patcher, isReactiveController } from "./patch"
 import type { CardElement, StylerState } from "./types"
 
 let CARD_CSS = ""
@@ -90,14 +90,6 @@ function applyStyles(node: CardElement, force = false) {
 
 function attach(re: HTMLElement) {
   const card = re as CardElement
-
-  override(card, "getCardSize", (getCardSize) => {
-    return card._config?.styler?.card_size ?? getCardSize?.()
-  })
-
-  override(card, "getGridSize", (getGridSize) => {
-    return card._config?.styler?.grid_size ?? getGridSize?.()
-  })
 
   if (isReactiveController(card)) {
     let config = card._config?.styler

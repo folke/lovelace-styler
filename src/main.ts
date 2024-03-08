@@ -1,5 +1,4 @@
 import "./editor"
-import "./grid"
 import "./styler"
 import "./tile-icon"
 
