@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/folke/lovelace-styler/compare/v1.5.1...v2.0.0) (2024-03-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* ha core now supports `layout_options`, so use that instead of styler card_size and styler grid_size
+
+### Features
+
+* ha core now supports `layout_options`, so use that instead of styler card_size and styler grid_size ([b927732](https://github.com/folke/lovelace-styler/commit/b9277324e3933abc7a4aa461517fc21206e4b82b))
+
 ## [1.5.1](https://github.com/folke/lovelace-styler/compare/v1.5.0...v1.5.1) (2024-03-06)
 
 
