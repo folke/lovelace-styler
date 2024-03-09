@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.0.0](https://github.com/folke/lovelace-styler/compare/v2.0.0...v3.0.0) (2024-03-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* removed custom:tile-icon. Use type:tile with info=false instead
+
+### Features
+
+* added custom tile options info=false, animation=spin|pulse ([1d2ebad](https://github.com/folke/lovelace-styler/commit/1d2ebaddbc645e36ae87ac056ae356042f239bc8))
+* removed custom:tile-icon. Use type:tile with info=false instead ([5e0e3ae](https://github.com/folke/lovelace-styler/commit/5e0e3ae0b52437af940163274f12c1a9a37742a2))
+
 ## [2.0.0](https://github.com/folke/lovelace-styler/compare/v1.5.1...v2.0.0) (2024-03-08)
 
 
