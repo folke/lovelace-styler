@@ -9,6 +9,7 @@ Plugin to customize the styling of Lovelace cards.
 - style any component as a card (like `vertical-stack`, `grid`, `layout-card`, ...)
 - remove card styling from any card
 - apply custom CSS to any component
+- tile card customization
 - similar plugins:
   - [card-mod](https://github.com/thomasloven/lovelace-card-mod)
   - [vertical-stack-in-card](https://github.com/ofekashery/vertical-stack-in-card)
@@ -97,6 +98,15 @@ styler:
 sections: ...
 ```
 
+## Tile Card Customization
+
+```yaml
+type: tile
+info: false # hides the info section, so only shows the icon
+animation: spin # adds a spinning animation to the icon
+animation: pulse # adds a pulsing animation to the icon
+```
+
 ## 🏠 Advanced Example
 
 The code below was used to create the two room cards in the screenshot above.
@@ -137,9 +147,11 @@ cards:
           margin: 12px;
         }
     cards:
-      - type: custom:tile-icon
+      - type: tile
+        info: false
         entity: light.group_lounge
-      - type: custom:tile-icon
+      - type: tile
+        info: false
         entity: binary_sensor.presence_living_room
         color: blue
 ```
@@ -179,15 +191,19 @@ cards:
           margin: 12px;
         }
     cards:
-      - type: custom:tile-icon
+      - type: tile
+        info: false
         entity: alarm_control_panel.upstairs
-      - type: custom:tile-icon
+      - type: tile
+        info: false
         entity: light.group_all_upstairs
       - type: custom:mushroom-template-card
-      - type: custom:tile-icon
+      - type: tile
+        info: false
         entity: binary_sensor.presence_upstairs
         color: blue
       - type: custom:mushroom-template-card
-      - type: custom:tile-icon
+      - type: tile
+        info: false
         entity: fan.ventilos
 ```

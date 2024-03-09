@@ -2,7 +2,8 @@ import type { CSSResult, LitElement } from "lit"
 import "./editor"
 
 import { Patcher, isReactiveController } from "./patch"
-import type { CardElement, StylerState } from "./types"
+import type { Card, StylerState, TileCard } from "./types"
+import { getTileCardCSS } from "./tile"
 
 let CARD_CSS = ""
 
@@ -11,7 +12,7 @@ let CARD_CSS = ""
 function getState(node?: Node): StylerState | undefined {
   if (!node) return
 
-  const card = node as CardElement
+  const card = node as Card
 
   const parentNode =
     node instanceof ShadowRoot ? node.host : node.parentElement ?? node.parentNode ?? undefined
@@ -28,7 +29,7 @@ function getState(node?: Node): StylerState | undefined {
 function isPreview(node?: Node): boolean {
   if (!node) return false
 
-  const card = node as CardElement
+  const card = node as Card
 
   if (card.tagName == "HUI-CARD-PREVIEW") return true
 
@@ -37,41 +38,47 @@ function isPreview(node?: Node): boolean {
   return isPreview(parentNode)
 }
 
-function applyStyles(node: CardElement, force = false) {
-  const isPreviewMode = node.editMode && isPreview(node)
+function applyStyles(card: Card, force = false) {
+  const isPreviewMode = card.editMode && isPreview(card)
 
-  if (!force && node._styler && !isPreviewMode) return
+  if (!force && card._styler && !isPreviewMode) return
 
-  const state = (node._styler = getState(node))
+  const state = (card._styler = getState(card))
 
   if (!state) return
 
-  let css: string | undefined
+  const css: string[] = []
 
   // Should we style this as a card?
   if (state.card) {
-    css = CARD_CSS
+    css.push(CARD_CSS)
   }
 
   // Do we have any custom styles to apply?
-  if (state.style) css = (css ?? "") + state.style
+  if (state.style) css.push(state.style)
 
-  if (css) {
+  if (card.tagName.toLowerCase() == "hui-tile-card") {
+    css.push(...getTileCardCSS(card as TileCard))
+  }
+
+  const cssText = css.length ? css.join("\n") : undefined
+
+  if (cssText) {
     state.styleEl ??= document.createElement("style")
-    if (state.styleEl.innerHTML !== css) state.styleEl.innerHTML = css
-    if (state.styleEl.parentNode !== node.shadowRoot) {
+    if (state.styleEl.innerHTML !== cssText) state.styleEl.innerHTML = cssText
+    if (state.styleEl.parentNode !== card.shadowRoot) {
       state.styleEl.remove()
-      node.shadowRoot?.appendChild(state.styleEl)
+      card.shadowRoot?.appendChild(state.styleEl)
     }
   } else if (state.styleEl) {
     state.styleEl.remove()
     state.styleEl = undefined
   }
 
-  if (isPreviewMode && node.style) {
-    if (node.style.border == "none") node.style.border = ""
-    if (node.style.boxShadow == "none") node.style.boxShadow = ""
-    if (node.style.background == "none") node.style.background = ""
+  if (isPreviewMode && card.style) {
+    if (card.style.border == "none") card.style.border = ""
+    if (card.style.boxShadow == "none") card.style.boxShadow = ""
+    if (card.style.background == "none") card.style.background = ""
   }
 
   // Remove the card styles if either:
@@ -79,17 +86,17 @@ function applyStyles(node: CardElement, force = false) {
   // - the parent doesn't want to be styled as a card
   // - the card itself doesn't want to be styled as a card
   if (
-    node.tagName == "HA-CARD" &&
+    card.tagName == "HA-CARD" &&
     (state.card === false || state.parent_card || state.parent_card === false)
   ) {
-    node.style.border = "none"
-    node.style.boxShadow = "none"
-    node.style.background = "none"
+    card.style.border = "none"
+    card.style.boxShadow = "none"
+    card.style.background = "none"
   }
 }
 
 function attach(re: HTMLElement) {
-  const card = re as CardElement
+  const card = re as Card
 
   if (isReactiveController(card)) {
     let config = card._config?.styler
