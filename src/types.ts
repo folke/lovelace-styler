@@ -8,7 +8,7 @@ export type StylerConfig = {
 
 export type TileConfig = {
   info?: boolean
-  animation?: "spin" | "pulse"
+  animation?: "spin" | "pulse" | "fade"
 }
 
 export type StylerState = StylerConfig & {

@@ -35,5 +35,15 @@ export function getTileCardCSS(card: TileCard): string[] {
       ha-tile-icon[data-state="on"] {animation: pulse 1s linear infinite;}
     `)
 
+  if (card._config?.animation == "fade")
+    css.push(`
+      @keyframes fade {
+        0% {opacity: 1;}
+        50% {opacity: 0.5;}
+        100% {opacity: 1;}
+      }
+      ha-tile-icon[data-state="on"] {animation: fade 2s linear infinite;}
+    `)
+
   return css
 }
