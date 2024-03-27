@@ -92,8 +92,9 @@ type: sections
 styler:
   style: |
     .container {
-      --grid-gap: 10px !important;
-      --grid-max-section-count: 2 !important;
+      --column-gap: 10px !important;
+      --column-max-width: 100hw !important;
+      --max-column-count: 2 !important;
     }
 sections: ...
 ```
