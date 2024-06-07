@@ -8,7 +8,7 @@
     "build": "vite build",
     "build:tsc": "tsc && vite build",
     "check": "tsc",
-    "lint": "eslint . --cache --max-warnings=0 --ext js,cjs,mjs,jsx,ts,tsx",
+    "lint": "eslint src/**/*.ts --cache --max-warnings=0",
     "lint:fix": "pnpm run lint --fix",
     "format": "prettier --cache --write .",
     "format:check": "prettier --cache --check src"
@@ -31,5 +31,11 @@
   "packageManager": "pnpm@8.15.4+sha256.cea6d0bdf2de3a0549582da3983c70c92ffc577ff4410cbf190817ddc35137c2",
   "engines": {
     "node": ">=16.x"
+  },
+  "dependencies": {
+    "@eslint/compat": "^1.0.3",
+    "@eslint/eslintrc": "^3.1.0",
+    "@eslint/js": "^9.4.0",
+    "globals": "^15.4.0"
   }
 }

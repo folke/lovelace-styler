@@ -43,7 +43,6 @@ export class Patcher {
   constructor(private attach: (el: HTMLElement) => void) {
     if (this.enabled) {
       // Override customElements.define to patch new elements
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       const define = customElements.define.bind(customElements)
       customElements.define = (
         name: string,
@@ -63,7 +62,7 @@ export class Patcher {
     walk(document.body, (el) => this._attach(el))
   }
 
-  patch(name: string, constructor: CustomElementConstructor) {
+  patch(_name: string, constructor: CustomElementConstructor) {
     if (isLitClass(constructor)) {
       // console.log("Patching", name)
       constructor.addInitializer((el: HTMLElement) => this._attach(el))
@@ -88,7 +87,6 @@ export function isReactiveController(el: unknown): el is ReactiveElement {
 
 export function override<
   M extends keyof T,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   T extends object,
   F extends T[M],
   // @ts-expect-error typing shananigans
