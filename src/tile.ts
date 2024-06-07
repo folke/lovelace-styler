@@ -10,6 +10,9 @@ export function getTileCardCSS(card: TileCard): string[] {
       hui-card-features {
         display: none;
       }
+      .content {
+        padding: 0 !important;
+      }
       .icon-container {
         margin-inline-start: 0;
         margin: 2px;
