@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0](https://github.com/folke/lovelace-styler/compare/v3.0.0...v3.1.0) (2024-03-27)
+
+
+### Features
+
+* **tile:** added fade animation (similar to pulse) ([e4fb6c9](https://github.com/folke/lovelace-styler/commit/e4fb6c90ffe60d0c656e56056def3c971bf79a2c))
+
 ## [3.0.0](https://github.com/folke/lovelace-styler/compare/v2.0.0...v3.0.0) (2024-03-09)
 
 
