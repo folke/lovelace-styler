@@ -1,7 +1,10 @@
 import type { ReactiveElement } from "lit"
 
 function getCustomElements() {
-  const els = (customElements as unknown as { l: Map<string, unknown> }).l
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+  const ce = customElements as any
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const els = (ce.l ?? ce.h) as Map<string, CustomElementConstructor>
   return [...els.keys()].map((k) => ({
     name: k,
     constructor: customElements.get(k) as CustomElementConstructor,
