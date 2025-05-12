@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.1.0](https://github.com/folke/lovelace-styler/compare/v3.0.0...v3.1.0) (2025-05-12)
+
+
+### Features
+
+* **tile:** added fade animation (similar to pulse) ([e4fb6c9](https://github.com/folke/lovelace-styler/commit/e4fb6c90ffe60d0c656e56056def3c971bf79a2c))
+
+
+### Bug Fixes
+
+* support for HA 2025.5.1 ([14030aa](https://github.com/folke/lovelace-styler/commit/14030aa245602b4b696069549bbe1c6a5d2a70c8))
+* **tile:** fix custom css for latest home assistant release ([c4cf5ad](https://github.com/folke/lovelace-styler/commit/c4cf5ad23939e1707930a96e4ab052eeaf862ee6))
+
 ## [3.0.0](https://github.com/folke/lovelace-styler/compare/v2.0.0...v3.0.0) (2024-03-09)
 
 
