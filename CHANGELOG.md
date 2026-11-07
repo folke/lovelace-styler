@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.1](https://github.com/folke/lovelace-styler/compare/v3.1.0...v3.1.1) (2026-11-07)
+
+
+### Bug Fixes
+
+* defer config access until after card initialization ([8f21dae](https://github.com/folke/lovelace-styler/commit/8f21dae09b7843a4d6aadea7d30f067c14191c4a))
+
 ## [3.1.0](https://github.com/folke/lovelace-styler/compare/v3.0.0...v3.1.0) (2025-05-12)
 
 
