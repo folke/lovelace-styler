@@ -2,7 +2,7 @@ import type { CSSResult, LitElement } from "lit"
 import "./editor"
 
 import { Patcher, isReactiveController } from "./patch"
-import type { Card, StylerState, TileCard } from "./types"
+import type { Card, StylerConfig, StylerState, TileCard } from "./types"
 import { getTileCardCSS } from "./tile"
 
 let CARD_CSS = ""
@@ -99,13 +99,15 @@ function attach(re: HTMLElement) {
   const card = re as Card
 
   if (isReactiveController(card)) {
-    let config = card._config?.styler
+    // Lit initializers run before subclass fields, so config getters are not safe yet.
+    let config: StylerConfig | undefined
     // Check if we need to apply any styles when the host is updated
     card.addController({
       hostUpdated() {
+        const nextConfig = card._config?.styler
         // force the styles to be applied if the config has changed
-        applyStyles(card, config !== card._config?.styler)
-        config = card._config?.styler
+        applyStyles(card, config !== nextConfig)
+        config = nextConfig
       },
     })
     card.requestUpdate()
