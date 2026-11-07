@@ -8,34 +8,21 @@
     "build": "vite build",
     "build:tsc": "tsc && vite build",
     "check": "tsc",
-    "lint": "eslint src/**/*.ts --cache --max-warnings=0",
+    "lint": "oxlint --deny-warnings",
     "lint:fix": "pnpm run lint --fix",
-    "format": "prettier --cache --write .",
-    "format:check": "prettier --cache --check src"
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
   },
   "devDependencies": {
-    "@types/node": "20.14.2",
-    "@typescript-eslint/eslint-plugin": "7.12.0",
-    "@typescript-eslint/parser": "7.12.0",
-    "eslint": "9.4.0",
-    "eslint-config-prettier": "9.1.0",
-    "eslint-import-resolver-typescript": "3.6.1",
-    "eslint-plugin-import": "2.29.1",
-    "eslint-plugin-only-warn": "1.1.0",
-    "eslint-plugin-prettier": "5.1.3",
-    "lit": "3.1.4",
-    "prettier": "3.3.1",
-    "typescript": "5.4.5",
-    "vite": "5.2.13"
+    "@types/node": "26.6.6",
+    "lit": "3.3.3",
+    "oxfmt": "0.77.0",
+    "oxlint": "1.92.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.6"
   },
-  "packageManager": "pnpm@8.15.4+sha256.cea6d0bdf2de3a0549582da3983c70c92ffc577ff4410cbf190817ddc35137c2",
+  "packageManager": "pnpm@12.18.0+sha512.9d7882d5dc82147ecfc4e062aa34834e0ad0296710a1837a1115ae012127d36b7109e321ac1598a1dd0a65597681b1e99917e12ed0d749eae91187943363beb3",
   "engines": {
-    "node": ">=16.x"
-  },
-  "dependencies": {
-    "@eslint/compat": "^1.0.3",
-    "@eslint/eslintrc": "^3.1.0",
-    "@eslint/js": "^9.4.0",
-    "globals": "^15.4.0"
+    "node": ">=22.12.0"
   }
 }

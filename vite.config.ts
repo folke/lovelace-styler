@@ -7,8 +7,10 @@ export default defineConfig({
       entry: "src/main.ts",
       formats: ["es"],
     },
-  },
-  esbuild: {
-    legalComments: "none",
+    rolldownOptions: {
+      output: {
+        comments: { legal: false },
+      },
+    },
   },
 })

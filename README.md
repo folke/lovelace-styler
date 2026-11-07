@@ -2,6 +2,20 @@
 
 Plugin to customize the styling of Lovelace cards.
 
+## Development
+
+Requires Node.js 22.12+ and pnpm (version pinned in `package.json`).
+
+```sh
+pnpm install
+pnpm lint
+pnpm check
+pnpm format:check
+pnpm build
+```
+
+Use `pnpm lint:fix` and `pnpm format` to apply fixes.
+
 <img src="https://github.com/folke/lovelace-styler/assets/292349/6314dc34-4750-4cf4-b7b4-c3d0b6132486">
 
 ## ✨ Features
@@ -56,7 +70,6 @@ type: custom:layout-card
 styler:
   card: true
 cards: ...
-
 ```
 
 ### Remove card styling from any card

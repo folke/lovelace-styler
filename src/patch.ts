@@ -1,9 +1,7 @@
 import type { ReactiveElement } from "lit"
 
 function getCustomElements() {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
   const ce = customElements as any
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const els = (ce.l ?? ce.h) as Map<string, CustomElementConstructor>
   return [...els.keys()].map((k) => ({
     name: k,
@@ -98,7 +96,6 @@ export function override<
   // @ts-expect-error typing shananigans
   klass[method] = function (this: T, ...args: Parameters<F>) {
     // @ts-expect-error typing shananigans
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     return fn.apply(this, [orig?.bind(this) as F, ...args])
   } as F
 }

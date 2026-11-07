@@ -32,7 +32,6 @@ void customElements.whenDefined("hui-card-element-editor").then((el) => {
         info: newConfig.info,
         animation: newConfig.animation,
       }
-      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       Object.keys(this._stylerConfig).forEach((key) => delete newConfig[key])
       orig(newConfig)
     })

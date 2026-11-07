@@ -15,7 +15,7 @@ function getState(node?: Node): StylerState | undefined {
   const card = node as Card
 
   const parentNode =
-    node instanceof ShadowRoot ? node.host : node.parentElement ?? node.parentNode ?? undefined
+    node instanceof ShadowRoot ? node.host : (node.parentElement ?? node.parentNode ?? undefined)
   const parentState = getState(parentNode)
 
   return {
@@ -34,7 +34,7 @@ function isPreview(node?: Node): boolean {
   if (card.tagName == "HUI-CARD-PREVIEW") return true
 
   const parentNode =
-    node instanceof ShadowRoot ? node.host : node.parentElement ?? node.parentNode ?? undefined
+    node instanceof ShadowRoot ? node.host : (node.parentElement ?? node.parentNode ?? undefined)
   return isPreview(parentNode)
 }
 
