@@ -2,20 +2,6 @@
 
 Plugin to customize the styling of Lovelace cards.
 
-## Development
-
-Requires Node.js 22.12+ and pnpm (version pinned in `package.json`).
-
-```sh
-pnpm install
-pnpm lint
-pnpm check
-pnpm format:check
-pnpm test # builds the plugin and runs regression tests
-```
-
-Use `pnpm lint:fix` and `pnpm format` to apply fixes.
-
 <img src="https://github.com/folke/lovelace-styler/assets/292349/6314dc34-4750-4cf4-b7b4-c3d0b6132486">
 
 ## ✨ Features
@@ -116,9 +102,9 @@ window.stylerPresets = {
       padding: 8px;
     }
   `,
-}
+};
 
-window.dispatchEvent(new Event("styler-presets-changed"))
+window.dispatchEvent(new Event("styler-presets-changed"));
 ```
 
 Register `/local/styler-presets.js` as an additional Lovelace **JavaScript module**
@@ -196,8 +182,8 @@ were previously missing. Deleting a definition and dispatching the event removes
 its CSS while retaining other presets and local styles.
 
 ```javascript
-window.stylerPresets.compact = "ha-card { padding: 4px; }"
-window.dispatchEvent(new Event("styler-presets-changed"))
+window.stylerPresets.compact = "ha-card { padding: 4px; }";
+window.dispatchEvent(new Event("styler-presets-changed"));
 ```
 
 Editing the resource **file** does not execute it again in an already-open browser.
@@ -346,9 +332,9 @@ window.stylerPresets = {
       zoom: 1.5;
     }
   `,
-}
+};
 
-window.dispatchEvent(new Event("styler-presets-changed"))
+window.dispatchEvent(new Event("styler-presets-changed"));
 ```
 
 Refresh the browser after saving the resource. These presets use modern browser
@@ -441,3 +427,17 @@ styler:
 
 Local CSS follows the shared preset, so this changes just that room. Edits to the
 shared resource update the common design for every room after a browser refresh.
+
+## 🔥 Contributing
+
+Requires Node.js 22.12+ and pnpm (version pinned in `package.json`).
+
+```sh
+pnpm install
+pnpm lint
+pnpm check
+pnpm format:check
+pnpm test # builds the plugin and runs regression tests
+```
+
+Use `pnpm lint:fix` and `pnpm format` to apply fixes.
