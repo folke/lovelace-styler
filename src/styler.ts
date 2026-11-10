@@ -3,6 +3,7 @@ import "./editor"
 
 import { Patcher, isReactiveController } from "./patch"
 import { getPresetCSS } from "./presets"
+import { applyCSS } from "./styles"
 import type { Card, StylerConfig, StylerState, TileCard } from "./types"
 import { getTileCardCSS } from "./tile"
 
@@ -22,6 +23,9 @@ function getState(node?: Node): StylerState | undefined {
   return {
     ...card._config?.styler,
     styleEl: card._styler?.styleEl,
+    styleSheet: card._styler?.styleSheet,
+    styleRoot: card._styler?.styleRoot,
+    cssText: card._styler?.cssText,
     parent_card: parentState?.card ?? parentState?.parent_card,
   }
 }
@@ -66,17 +70,7 @@ function applyStyles(card: Card, force: boolean) {
 
   const cssText = css.length ? css.join("\n") : undefined
 
-  if (cssText) {
-    state.styleEl ??= document.createElement("style")
-    if (state.styleEl.innerHTML !== cssText) state.styleEl.innerHTML = cssText
-    if (state.styleEl.parentNode !== card.shadowRoot) {
-      state.styleEl.remove()
-      card.shadowRoot?.appendChild(state.styleEl)
-    }
-  } else if (state.styleEl) {
-    state.styleEl.remove()
-    state.styleEl = undefined
-  }
+  applyCSS(card.shadowRoot, state, cssText)
 
   if (isPreviewMode && card.style) {
     if (card.style.border == "none") card.style.border = ""

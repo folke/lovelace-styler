@@ -177,6 +177,16 @@ CSS is composed in this order: Styler's card CSS when `card: true`, then the nam
 presets in list order, then local `style`. Normal CSS specificity and `!important`
 still apply. Existing Tile customization is preserved.
 
+On modern browsers, Styler appends its own constructed stylesheet after the
+component's adopted stylesheets. Equal-specificity rules therefore override the
+component defaults without `!important`; more-specific selectors, inline styles,
+and existing `!important` declarations still follow normal cascade rules.
+Browsers without constructed stylesheet support use a regular `<style>` element.
+CSS containing `@import` also uses that compatibility path, since constructed
+stylesheets do not support imports. On that path, adopted component stylesheets
+still come after Styler's CSS, so equal-specificity overrides may need stronger
+selectors or `!important`.
+
 Presets are inserted into the **same component shadow root** as local `styler.style`.
 Selectors cannot cross nested shadow roots, and parent presets are not automatically
 applied to children. For example, reference `area-summary` on the grid and

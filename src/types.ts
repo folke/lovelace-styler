@@ -20,6 +20,9 @@ export type TileConfig = {
 
 export type StylerState = StylerConfig & {
   styleEl?: HTMLStyleElement
+  styleSheet?: CSSStyleSheet
+  styleRoot?: ShadowRoot
+  cssText?: string
   parent_card?: boolean
 }
 

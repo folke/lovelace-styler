@@ -18,6 +18,12 @@ class ShadowRoot {
 }
 class StyleElement {
   innerHTML = ""
+  get textContent() {
+    return this.innerHTML
+  }
+  set textContent(value) {
+    this.innerHTML = value
+  }
   parentNode = null
   remove() {
     if (!this.parentNode) return
@@ -130,11 +136,19 @@ class Card extends ReactiveElement {
     this.disconnectedCallback()
   }
   get css() {
-    return this._styler?.styleEl?.innerHTML
+    return this._styler?.cssText ?? this._styler?.styleEl?.innerHTML
   }
 }
 customElements.define("test-card", Card)
 const cards = []
+const originalCSSStyleSheet = globalThis.CSSStyleSheet
+class StyleSheet {
+  replacements = 0
+  replaceSync(cssText) {
+    this.cssText = cssText
+    this.replacements++
+  }
+}
 async function mount(config = {}, tagName, parent) {
   const card = new Card(config, tagName, parent)
   cards.push(card)
@@ -146,6 +160,8 @@ async function notify() {
   await Promise.all(cards.filter((card) => card.isConnected).map((card) => card.updateComplete))
 }
 afterEach(() => {
+  if (originalCSSStyleSheet === undefined) delete globalThis.CSSStyleSheet
+  else globalThis.CSSStyleSheet = originalCSSStyleSheet
   for (const card of cards) card.disconnect()
   cards.length = 0
   assert.equal(cardListenerCount(), 0, "all card listeners must be removed")
@@ -397,6 +413,113 @@ test("disconnect cleans up listeners and reconnect refreshes missed registry cha
   card.disconnect()
   await card.connect()
   assert.equal(cardListenerCount(), 1)
+})
+
+test("adopted overrides follow native sheets and reuse unchanged CSS", async () => {
+  globalThis.CSSStyleSheet = StyleSheet
+  const native = new StyleSheet()
+  native.replaceSync("/* native */")
+  const card = new Card({ styler: { style: "/* custom */" } })
+  cards.push(card)
+  card.shadowRoot.adoptedStyleSheets = [native]
+  await card.connect()
+  const sheet = card._styler.styleSheet
+  assert.deepEqual(card.shadowRoot.adoptedStyleSheets, [native, sheet])
+  assert.equal(sheet.cssText, "/* custom */")
+  assert.equal(card.shadowRoot.children.length, 0)
+  assert.equal(card._styler.styleEl, undefined)
+
+  card._config = { styler: { style: "/* custom */" } }
+  card.requestUpdate()
+  await card.updateComplete
+  assert.equal(card._styler.styleSheet, sheet)
+  assert.equal(sheet.replacements, 1)
+
+  const later = new StyleSheet()
+  card.shadowRoot.adoptedStyleSheets.push(later)
+  card._config = { styler: { style: "/* changed */" } }
+  card.requestUpdate()
+  await card.updateComplete
+  assert.deepEqual(card.shadowRoot.adoptedStyleSheets, [native, later, sheet])
+  assert.equal(sheet.cssText, "/* changed */")
+  assert.equal(native.cssText, "/* native */")
+  assert.equal(sheet.replacements, 2)
+
+  card._config = {}
+  card.requestUpdate()
+  await card.updateComplete
+  assert.deepEqual(card.shadowRoot.adoptedStyleSheets, [native, later])
+  assert.equal(card._styler.styleSheet, undefined)
+  assert.equal(card._styler.styleRoot, undefined)
+})
+
+test("adopted preset updates stay isolated per card and clean up on removal", async () => {
+  globalThis.CSSStyleSheet = StyleSheet
+  window.stylerPresets = { shared: "/* shared */" }
+  const native = new StyleSheet()
+  for (let i = 0; i < 2; i++) {
+    const card = new Card({ styler: { preset: "shared" } })
+    cards.push(card)
+    card.shadowRoot.adoptedStyleSheets = [native]
+    await card.connect()
+  }
+  const [first, second] = cards
+  assert.notEqual(first._styler.styleSheet, second._styler.styleSheet)
+  window.stylerPresets.shared = "/* edited */"
+  await notify()
+  assert.equal(first.css, "/* edited */")
+  assert.equal(second.css, "/* edited */")
+
+  first.disconnect()
+  window.stylerPresets.shared = "/* reconnected */"
+  await notify()
+  assert.equal(first.css, "/* edited */")
+  await first.connect()
+  assert.equal(first.css, "/* reconnected */")
+  assert.equal(first.shadowRoot.adoptedStyleSheets.length, 2)
+
+  const warn = console.warn
+  console.warn = () => {}
+  try {
+    delete window.stylerPresets.shared
+    await notify()
+    for (const card of cards) {
+      assert.equal(card.css, undefined)
+      assert.deepEqual(card.shadowRoot.adoptedStyleSheets, [native])
+    }
+  } finally {
+    console.warn = warn
+  }
+})
+
+test("DOM styles support older browsers and imports without leaving stale sheets", async () => {
+  const card = await mount({ styler: { style: "/* fallback */" } })
+  assert.equal(card._styler.styleEl.textContent, "/* fallback */")
+  assert.equal(card._styler.styleSheet, undefined)
+  const fallback = card._styler.styleEl
+  globalThis.CSSStyleSheet = StyleSheet
+  const native = new StyleSheet()
+  card.shadowRoot.adoptedStyleSheets = [native]
+  card._config = { styler: { style: "/* adopted */" } }
+  card.requestUpdate()
+  await card.updateComplete
+  assert.equal(fallback.parentNode, null)
+  assert.equal(card.shadowRoot.children.length, 0)
+  assert.equal(card.shadowRoot.adoptedStyleSheets.length, 2)
+
+  card._config = { styler: { style: '@import url("/local/custom.css"); :host { color: red; }' } }
+  card.requestUpdate()
+  await card.updateComplete
+  assert.deepEqual(card.shadowRoot.adoptedStyleSheets, [native])
+  assert.equal(card._styler.styleSheet, undefined)
+  assert.match(card._styler.styleEl.textContent, /^@import/)
+  assert.equal(card.shadowRoot.children.length, 1)
+
+  card._config = {}
+  card.requestUpdate()
+  await card.updateComplete
+  assert.equal(card.shadowRoot.children.length, 0)
+  assert.deepEqual(card.shadowRoot.adoptedStyleSheets, [native])
 })
 
 test("visual editor round trip preserves preset configuration", async () => {
