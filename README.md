@@ -2,7 +2,8 @@
 
 Plugin to customize the styling of Lovelace cards.
 
-<img src="https://github.com/folke/lovelace-styler/assets/292349/6314dc34-4750-4cf4-b7b4-c3d0b6132486">
+<img width="785" height="584" alt="image" src="https://github.com/user-attachments/assets/bf407310-9b7d-47bb-bf5c-9422dff3da07" />
+
 
 ## ✨ Features
 
