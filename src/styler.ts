@@ -39,7 +39,7 @@ function isPreview(node?: Node): boolean {
   return isPreview(parentNode)
 }
 
-function applyStyles(card: Card, force: boolean, warn: (message: string) => void) {
+function applyStyles(card: Card, force: boolean) {
   const isPreviewMode = card.editMode && isPreview(card)
 
   if (!force && card._styler && !isPreviewMode) return
@@ -55,7 +55,7 @@ function applyStyles(card: Card, force: boolean, warn: (message: string) => void
     css.push(CARD_CSS)
   }
 
-  css.push(...getPresetCSS(state.preset, warn))
+  css.push(...getPresetCSS(state.preset))
 
   // Do we have any custom styles to apply?
   if (state.style) css.push(state.style)
@@ -107,12 +107,6 @@ function attach(re: HTMLElement) {
     let presetsChanged = false
     let usesPresets = false
     let listening = false
-    const warnings = new Set<string>()
-    const warn = (message: string) => {
-      if (warnings.has(message)) return
-      warnings.add(message)
-      console.warn(`[Styler] ${message}`, card)
-    }
     const refreshPresets = () => {
       presetsChanged = true
       card.requestUpdate()
@@ -140,7 +134,7 @@ function attach(re: HTMLElement) {
           }
           listening = shouldListen
         }
-        applyStyles(card, config !== nextConfig || presetsChanged, warn)
+        applyStyles(card, config !== nextConfig || presetsChanged)
         config = nextConfig
         presetsChanged = false
       },

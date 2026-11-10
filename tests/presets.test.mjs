@@ -75,6 +75,12 @@ window.stylerPresets = { early: "/* loaded before Styler */" }
 await import("../dist/styler.js")
 await Promise.resolve()
 
+// One module-level listener resets shared warnings; the rest belong to cards.
+assert.equal(window.listeners.size, 1)
+function cardListenerCount() {
+  return window.listeners.size - 1
+}
+
 class Card extends ReactiveElement {
   constructor(config = {}, tagName = "TEST-CARD", parent = null) {
     super()
@@ -142,8 +148,9 @@ async function notify() {
 afterEach(() => {
   for (const card of cards) card.disconnect()
   cards.length = 0
-  assert.equal(window.listeners.size, 0, "all card listeners must be removed")
+  assert.equal(cardListenerCount(), 0, "all card listeners must be removed")
   delete window.stylerPresets
+  window.dispatchEvent(new Event("styler-presets-changed"))
 })
 
 test("resource loaded before Styler is available on first render", async () => {
@@ -233,7 +240,7 @@ test("removing a preset-only definition removes its style element", async () => 
   }
 })
 
-test("invalid and inherited definitions warn once per card without discarding valid CSS", async () => {
+test("invalid definitions warn once across cards and reset on registry events", async () => {
   const messages = []
   const warning = console.warn
   console.warn = (message) => messages.push(message)
@@ -252,10 +259,14 @@ test("invalid and inherited definitions warn once per card without discarding va
     assert.equal(messages.length, 6)
     assert.ok(messages.some((message) => message.includes('Unknown preset "missing"')))
     assert.ok(messages.some((message) => message.includes('Preset "bad" must be a CSS string')))
-    await notify()
+    const another = await mount(card._config)
+    assert.equal(another.css, card.css)
+    assert.equal(messages.length, 6)
     card.requestUpdate()
     await card.updateComplete
     assert.equal(messages.length, 6)
+    await notify()
+    assert.equal(messages.length, 12)
     window.stylerPresets.missing = "/* now present */"
     await notify()
     assert.match(card.css, /^\/\* now present \*\//)
@@ -263,8 +274,9 @@ test("invalid and inherited definitions warn once per card without discarding va
     await notify()
     assert.equal(card.css, "/* local */")
     assert.match(messages.at(-1), /must be an object/)
+    const count = messages.length
     await notify()
-    assert.equal(messages.length, 7)
+    assert.equal(messages.length, count + 1)
     card._config = { styler: { preset: 42, style: "/* local */" } }
     card.requestUpdate()
     await card.updateComplete
@@ -273,6 +285,25 @@ test("invalid and inherited definitions warn once per card without discarding va
   } finally {
     console.warn = warning
   }
+})
+
+test("shared warning suppression expires after a minute without a timer", async (t) => {
+  let now = Date.now()
+  t.mock.method(Date, "now", () => now)
+  const messages = []
+  t.mock.method(console, "warn", (message) => messages.push(message))
+  await notify()
+  const config = { styler: { preset: "missing" } }
+  await mount(config)
+  await mount(config)
+  assert.equal(messages.length, 1)
+  now += 59_999
+  await mount(config)
+  assert.equal(messages.length, 1)
+  now += 1
+  await mount(config)
+  await mount(config)
+  assert.equal(messages.length, 2)
 })
 
 test("parent presets stay scoped while parent card inheritance is preserved", async () => {
@@ -303,23 +334,69 @@ test("preview updates retain preset order and do not duplicate styles", async ()
   assert.equal(card.shadowRoot.children.length, 1)
 })
 
+test("preset events do not update cards without presets", async () => {
+  await mount()
+  await mount({ styler: { style: "/* local */" } })
+  await mount({ styler: { preset: [] } })
+  assert.equal(cardListenerCount(), 0)
+  const requests = cards.map((card) => card.updatesRequested)
+  window.stylerPresets = { shared: "/* shared */" }
+  await notify()
+  assert.deepEqual(
+    cards.map((card) => card.updatesRequested),
+    requests
+  )
+})
+
+test("listeners follow preset configuration and are added only after the first update", async () => {
+  window.stylerPresets = { shared: "/* shared */" }
+  const card = new Card({ styler: { preset: "shared" } })
+  cards.push(card)
+  const update = card.connect()
+  assert.equal(cardListenerCount(), 0)
+  await update
+  assert.equal(cardListenerCount(), 1)
+
+  for (const styler of [{ style: "/* local */" }, { preset: [] }, undefined]) {
+    card._config = { styler }
+    card.requestUpdate()
+    await card.updateComplete
+    assert.equal(cardListenerCount(), 0)
+    const requests = card.updatesRequested
+    await notify()
+    assert.equal(card.updatesRequested, requests)
+    card._config = { styler: { preset: ["shared"] } }
+    card.requestUpdate()
+    await card.updateComplete
+    assert.equal(cardListenerCount(), 1)
+    assert.equal(card.css, "/* shared */")
+  }
+
+  card.disconnect()
+  card.requestUpdate()
+  await card.updateComplete
+  assert.equal(cardListenerCount(), 0, "updates while disconnected must not resubscribe")
+  await card.connect()
+  assert.equal(cardListenerCount(), 1)
+})
+
 test("disconnect cleans up listeners and reconnect refreshes missed registry changes", async () => {
   window.stylerPresets = { shared: "/* before */" }
   const card = await mount({ styler: { preset: "shared" } })
-  assert.equal(window.listeners.size, 1)
+  assert.equal(cardListenerCount(), 1)
   card.disconnect()
-  assert.equal(window.listeners.size, 0)
+  assert.equal(cardListenerCount(), 0)
   const requests = card.updatesRequested
   window.stylerPresets.shared = "/* while disconnected */"
   await notify()
   assert.equal(card.updatesRequested, requests)
   assert.equal(card.css, "/* before */")
   await card.connect()
-  assert.equal(window.listeners.size, 1)
+  assert.equal(cardListenerCount(), 1)
   assert.equal(card.css, "/* while disconnected */")
   card.disconnect()
   await card.connect()
-  assert.equal(window.listeners.size, 1)
+  assert.equal(cardListenerCount(), 1)
 })
 
 test("visual editor round trip preserves preset configuration", async () => {

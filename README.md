@@ -186,7 +186,10 @@ inheritance is unchanged.
 There is no variable substitution, YAML/card templating, or automatic nested-component
 targeting. Use CSS custom properties and local CSS for per-room differences.
 Unknown names and non-string definitions are skipped with console warnings; valid
-presets and local CSS still work. An absent registry is fine when no presets are used.
+presets and local CSS still work. Identical warnings are shared across cards and
+suppressed until the next change event or a minute has elapsed; expiry is checked
+when another warning occurs, without a background timer. An absent registry is fine
+when no presets are used.
 
 #### Updating presets
 

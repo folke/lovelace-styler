@@ -1,9 +1,23 @@
 import type { StylerConfig } from "./types"
 
-export function getPresetCSS(
-  preset: StylerConfig["preset"],
-  warn: (message: string) => void
-): string[] {
+const warnings = new Set<string>()
+let warningsResetAt = 0
+
+function clearWarnings() {
+  warnings.clear()
+  warningsResetAt = Date.now() + 60_000
+}
+
+window.addEventListener("styler-presets-changed", clearWarnings)
+
+function warn(message: string) {
+  if (Date.now() >= warningsResetAt) clearWarnings()
+  if (warnings.has(message)) return
+  warnings.add(message)
+  console.warn(`[Styler] ${message}`)
+}
+
+export function getPresetCSS(preset: StylerConfig["preset"]): string[] {
   if (preset === undefined) return []
 
   if (typeof preset !== "string" && !Array.isArray(preset)) {
