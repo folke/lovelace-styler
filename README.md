@@ -106,25 +106,14 @@ Create `/config/www/styler-presets.js` on your Home Assistant installation:
 
 ```javascript
 window.stylerPresets = {
-  "area-summary": `
-    #root {
-      grid-template-columns: minmax(0, 1fr) max-content !important;
-      align-items: stretch;
-      gap: 0 !important;
-      min-height: 240px;
-    }
-  `,
-  "area-summary-badges": `
-    .content {
-      display: none !important;
-    }
-    hui-heading-badge {
-      zoom: 1.75;
+  rounded: `
+    :host {
+      --ha-card-border-radius: 20px;
     }
   `,
   compact: `
-    :host {
-      --ha-card-border-radius: 12px;
+    ha-card {
+      padding: 8px;
     }
   `,
 }
@@ -152,12 +141,10 @@ presets in dashboard YAML are needed.
 Use one name:
 
 ```yaml
-type: grid
-columns: 2
+type: tile
+entity: light.kitchen
 styler:
-  card: true
-  preset: area-summary
-cards: ...
+  preset: rounded
 ```
 
 Or an ordered list, with optional local CSS overrides:
@@ -165,11 +152,11 @@ Or an ordered list, with optional local CSS overrides:
 ```yaml
 styler:
   preset:
-    - area-summary
+    - rounded
     - compact
   style: |
-    :host {
-      --room-icon-size: 100px;
+    ha-card {
+      padding: 4px;
     }
 ```
 
@@ -209,7 +196,7 @@ were previously missing. Deleting a definition and dispatching the event removes
 its CSS while retaining other presets and local styles.
 
 ```javascript
-window.stylerPresets.compact = ":host { --ha-card-border-radius: 8px; }"
+window.stylerPresets.compact = "ha-card { padding: 4px; }"
 window.dispatchEvent(new Event("styler-presets-changed"))
 ```
 
@@ -246,103 +233,211 @@ animation: spin # adds a spinning animation to the icon
 animation: pulse # adds a pulsing animation to the icon
 ```
 
-## 🏠 Advanced Example
+## 🏠 Example: Room Summary with Native Cards
 
-The code below was used to create the two room cards in the screenshot above.
-The example code uses the [Mushroom Custom Cards](https://github.com/piitaya/lovelace-mushroom).
+An oversized room icon, temperature and humidity, and a column of quick controls—all
+built with Home Assistant's native **Grid**, **Area**, and **Heading** cards.
+No Mushroom cards, wrapper cards, or templates required. Native visual editors
+remain available, and the CSS is shared across rooms instead of repeated in YAML.
 
-### Living Room Card
+The composition has three parts:
 
-```yaml
-type: horizontal-stack
-layout_options:
-  grid_columns: 2
-styler:
-  card: true
-cards:
-  - type: custom:mushroom-template-card
-    primary: Living Room
-    secondary: "{{ states('sensor.netatmo_living_room_temperature_2') | round(0) }} °C"
-    icon: mdi:sofa
-    icon_color: pink
-    tap_action:
-      action: navigate
-      navigation_path: downstairs
-    styler:
-      style: |
-        mushroom-state-info { min-height: 150px }
-        ha-card { --icon-size: 130px }
-        mushroom-shape-icon {
-          position: absolute;
-          margin: -20px -25px;
-        }
-  - type: grid
-    columns: 1
-    square: false
-    styler:
-      style: |
-        :host {
-          flex: 0 0 auto !important;
-          margin: 12px;
-        }
-    cards:
-      - type: tile
-        info: false
-        entity: light.group_lounge
-      - type: tile
-        info: false
-        entity: binary_sensor.presence_living_room
-        color: blue
+| Card    | Preset                | Purpose                                                                                        |
+| ------- | --------------------- | ---------------------------------------------------------------------------------------------- |
+| Grid    | `area-summary`        | Combines the two cards into one surface, with a flexible summary and a narrow controls column. |
+| Area    | `area-summary-area`   | Shows the room's name and sensors above a large, cropped area icon.                            |
+| Heading | `area-summary-badges` | Hides the heading text and arranges entity badges vertically.                                  |
+
+### 1. Add the shared presets
+
+Add these definitions to `/config/www/styler-presets.js`, registered as a module
+resource at `/local/styler-presets.js` as described [above](#install-a-shared-resource).
+The spread preserves any presets already defined by other resources.
+
+```javascript
+window.stylerPresets = {
+  ...window.stylerPresets,
+
+  "area-summary": `
+    #root {
+      grid-template-columns: minmax(0, 1fr) max-content;
+      align-items: stretch;
+      gap: 0;
+    }
+  `,
+
+  "area-summary-area": `
+    :host {
+      height: 100%;
+    }
+
+    ha-card {
+      height: 100%;
+      min-height: 180px;
+      position: relative;
+    }
+
+    ha-tile-container {
+      height: 100%;
+    }
+
+    ha-tile-info {
+      position: absolute;
+      top: 18px;
+      left: 20px;
+      right: 8px;
+      z-index: 1;
+    }
+
+    ha-tile-icon {
+      --area-accent: var(--tile-color);
+      --tile-icon-color: var(--area-accent);
+      position: absolute;
+      bottom: -30px;
+      left: -20px;
+      margin: 0;
+      padding: 0;
+
+      display: block;
+      width: 140px;
+      height: 140px;
+      --tile-icon-size: 140px;
+      --mdc-icon-size: 90px;
+
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--area-accent) 20%, transparent);
+    }
+  `,
+
+  "area-summary-badges": `
+    :host {
+      --state-light-inactive-color: var(--grey-color);
+      --state-binary_sensor-inactive-color: var(--grey-color);
+    }
+
+    ha-card {
+      height: 100%;
+    }
+
+    .content {
+      display: none;
+    }
+
+    .container {
+      height: 100%;
+      box-sizing: border-box;
+      padding: 15px;
+    }
+
+    .badges {
+      height: 100%;
+      overflow: visible;
+      max-width: none;
+    }
+
+    .badges-row {
+      height: 100%;
+      flex-direction: column;
+      align-items: end;
+      gap: 16px;
+    }
+
+    hui-heading-badge {
+      zoom: 1.5;
+    }
+  `,
+}
+
+window.dispatchEvent(new Event("styler-presets-changed"))
 ```
 
-### Upstairs Card
+Refresh the browser after saving the resource. These presets use modern browser
+CSS and target Home Assistant's current internal card structure, which can change
+between frontend versions. No `!important` is needed with Styler's adopted
+stylesheet support on modern browsers.
+
+### 2. Add a kitchen card
+
+Paste this into a dashboard's manual card editor. Replace `kitchen` with your area
+ID and the three entity IDs with your own. Set the area's icon in Home Assistant's
+area settings to choose the large room icon.
 
 ```yaml
-type: horizontal-stack
-layout_options:
-  grid_columns: 2
+type: grid
+columns: 2
+square: false
+cards:
+  - type: area
+    area: kitchen
+    color: green
+    alert_classes:
+      - motion
+      - occupancy
+    sensor_classes:
+      - temperature
+      - humidity
+    display_type: compact
+    vertical: false
+    features_position: bottom
+    styler:
+      preset: area-summary-area
+  - type: heading
+    badges:
+      - type: entity
+        entity: light.area_kitchen
+        show_state: false
+        show_icon: true
+        color: state
+        tap_action:
+          action: toggle
+      - type: entity
+        entity: binary_sensor.kitchen_occupancy_status
+        show_state: false
+        show_icon: true
+        color: state
+        tap_action:
+          action: more-info
+      - type: entity
+        entity: lock.side_door_lock
+        show_state: false
+        show_icon: true
+        color: state
+        tap_action:
+          action: more-info
+    styler:
+      preset: area-summary-badges
+grid_options:
+  columns: 6
 styler:
   card: true
-cards:
-  - type: custom:mushroom-template-card
-    primary: Upstairs
-    secondary: "{{ states('sensor.netatmo_upstairs_temperature_3') | round(0) }} °C"
-    icon: mdi:bed
-    icon_color: brown
-    tap_action:
-      action: navigate
-      navigation_path: downstairs
-    styler:
-      style: |
-        mushroom-state-info { min-height: 150px }
-        ha-card { --icon-size: 130px }
-        mushroom-shape-icon {
-          position: absolute;
-          margin: -20px -25px;
-        }
-  - type: grid
-    columns: 2
-    square: false
-    styler:
-      style: |
-        :host {
-          flex: 0 0 auto !important;
-          margin: 12px;
-        }
-    cards:
-      - type: tile
-        info: false
-        entity: alarm_control_panel.upstairs
-      - type: tile
-        info: false
-        entity: light.group_all_upstairs
-      - type: custom:mushroom-template-card
-      - type: tile
-        info: false
-        entity: binary_sensor.presence_upstairs
-        color: blue
-      - type: custom:mushroom-template-card
-      - type: tile
-        info: false
-        entity: fan.ventilos
+  preset: area-summary
 ```
+
+`card: true` gives the outer grid a card surface and suppresses nested card
+backgrounds. Each child explicitly selects its own preset because CSS selectors
+cannot cross shadow roots. The `grid_options` setting makes this card half-width
+in a Sections view; omit or adjust it for your layout.
+
+The Area card gets its temperature, humidity, and alerts from entities assigned
+to that area. The light badge toggles your chosen light entity or group; the
+occupancy and lock badges open their more-info dialogs.
+
+### 3. Reuse it for other rooms
+
+Duplicate only the card YAML: change the area, color, and badge entities. Keep the
+same three presets. Add or remove badges through the Heading card's visual editor;
+keep the Area card in compact, horizontal mode for this layout.
+
+For a taller room card, append local CSS to the **Area** card's Styler config:
+
+```yaml
+styler:
+  preset: area-summary-area
+  style: |
+    ha-card {
+      min-height: 220px;
+    }
+```
+
+Local CSS follows the shared preset, so this changes just that room. Edits to the
+shared resource update the common design for every room after a browser refresh.
