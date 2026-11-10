@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.0](https://github.com/folke/lovelace-styler/compare/v3.1.1...v3.2.0) (2026-11-10)
+
+
+### Features
+
+* add shared CSS presets ([739779c](https://github.com/folke/lovelace-styler/commit/739779c1cf0721079f2998f033064e039610b016))
+
 ## [3.1.1](https://github.com/folke/lovelace-styler/compare/v3.1.0...v3.1.1) (2026-11-07)
 
 
