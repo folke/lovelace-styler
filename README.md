@@ -4,7 +4,6 @@ Plugin to customize the styling of Lovelace cards.
 
 <img width="785" height="584" alt="image" src="https://github.com/user-attachments/assets/bf407310-9b7d-47bb-bf5c-9422dff3da07" />
 
-
 ## ✨ Features
 
 - style any component as a card (like `vertical-stack`, `grid`, `layout-card`, ...)
@@ -103,9 +102,9 @@ window.stylerPresets = {
       padding: 8px;
     }
   `,
-};
+}
 
-window.dispatchEvent(new Event("styler-presets-changed"));
+window.dispatchEvent(new Event("styler-presets-changed"))
 ```
 
 Register `/local/styler-presets.js` as an additional Lovelace **JavaScript module**
@@ -183,8 +182,8 @@ were previously missing. Deleting a definition and dispatching the event removes
 its CSS while retaining other presets and local styles.
 
 ```javascript
-window.stylerPresets.compact = "ha-card { padding: 4px; }";
-window.dispatchEvent(new Event("styler-presets-changed"));
+window.stylerPresets.compact = "ha-card { padding: 4px; }"
+window.dispatchEvent(new Event("styler-presets-changed"))
 ```
 
 Editing the resource **file** does not execute it again in an already-open browser.
@@ -333,9 +332,9 @@ window.stylerPresets = {
       zoom: 1.5;
     }
   `,
-};
+}
 
-window.dispatchEvent(new Event("styler-presets-changed"));
+window.dispatchEvent(new Event("styler-presets-changed"))
 ```
 
 Refresh the browser after saving the resource. These presets use modern browser
