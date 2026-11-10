@@ -2,6 +2,7 @@ import type { CSSResult, LitElement } from "lit"
 import "./editor"
 
 import { Patcher, isReactiveController } from "./patch"
+import { getPresetCSS } from "./presets"
 import type { Card, StylerConfig, StylerState, TileCard } from "./types"
 import { getTileCardCSS } from "./tile"
 
@@ -38,7 +39,7 @@ function isPreview(node?: Node): boolean {
   return isPreview(parentNode)
 }
 
-function applyStyles(card: Card, force = false) {
+function applyStyles(card: Card, force: boolean, warn: (message: string) => void) {
   const isPreviewMode = card.editMode && isPreview(card)
 
   if (!force && card._styler && !isPreviewMode) return
@@ -53,6 +54,8 @@ function applyStyles(card: Card, force = false) {
   if (state.card) {
     css.push(CARD_CSS)
   }
+
+  css.push(...getPresetCSS(state.preset, warn))
 
   // Do we have any custom styles to apply?
   if (state.style) css.push(state.style)
@@ -101,13 +104,31 @@ function attach(re: HTMLElement) {
   if (isReactiveController(card)) {
     // Lit initializers run before subclass fields, so config getters are not safe yet.
     let config: StylerConfig | undefined
-    // Check if we need to apply any styles when the host is updated
+    let presetsChanged = false
+    const warnings = new Set<string>()
+    const warn = (message: string) => {
+      if (warnings.has(message)) return
+      warnings.add(message)
+      console.warn(`[Styler] ${message}`, card)
+    }
+    const refreshPresets = () => {
+      presetsChanged = true
+      card.requestUpdate()
+    }
     card.addController({
+      hostConnected() {
+        window.addEventListener("styler-presets-changed", refreshPresets)
+        // Also catch registry changes made while this card was disconnected.
+        refreshPresets()
+      },
+      hostDisconnected() {
+        window.removeEventListener("styler-presets-changed", refreshPresets)
+      },
       hostUpdated() {
         const nextConfig = card._config?.styler
-        // force the styles to be applied if the config has changed
-        applyStyles(card, config !== nextConfig)
+        applyStyles(card, config !== nextConfig || presetsChanged, warn)
         config = nextConfig
+        presetsChanged = false
       },
     })
     card.requestUpdate()

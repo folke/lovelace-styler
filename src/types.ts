@@ -1,6 +1,13 @@
 import type { LitElement } from "lit"
 
+declare global {
+  interface Window {
+    stylerPresets?: Record<string, string>
+  }
+}
+
 export type StylerConfig = {
+  preset?: string | string[]
   card?: boolean
   style?: string
   spin_icon?: boolean

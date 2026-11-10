@@ -35,8 +35,8 @@ jobs:
       - name: "Check format"
         run: pnpm run format:check
 
-      - name: "Run Build"
-        run: pnpm run build
+      - name: "Build and test"
+        run: pnpm test
 
       - uses: google-github-actions/release-please-action@v4
         if: ${{ github.ref == 'refs/heads/main' }}

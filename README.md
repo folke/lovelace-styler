@@ -11,7 +11,7 @@ pnpm install
 pnpm lint
 pnpm check
 pnpm format:check
-pnpm build
+pnpm test # builds the plugin and runs regression tests
 ```
 
 Use `pnpm lint:fix` and `pnpm format` to apply fixes.
@@ -23,6 +23,7 @@ Use `pnpm lint:fix` and `pnpm format` to apply fixes.
 - style any component as a card (like `vertical-stack`, `grid`, `layout-card`, ...)
 - remove card styling from any card
 - apply custom CSS to any component
+- reuse named CSS presets across cards and dashboards
 - tile card customization
 - similar plugins:
   - [card-mod](https://github.com/thomasloven/lovelace-card-mod)
@@ -35,8 +36,9 @@ Use `pnpm lint:fix` and `pnpm format` to apply fixes.
 Great care has been taken to minimize the overhead of this plugin.
 This plugin works by hooking into [Lit](https://lit.dev)'s [reactive life-cycle](https://lit.dev/docs/components/lifecycle/#reactive-update-cycle)
 using [ReactiveElement.addInitializer](https://lit.dev/docs/components/lifecycle/#addInitializer)
-and a custom [Reactive Controller](https://lit.dev/docs/composition/controllers/#lifecycle)
-that only runs once per card in the `hostUpdated` live-cycle callback.
+and a custom [Reactive Controller](https://lit.dev/docs/composition/controllers/#lifecycle).
+Styles are applied after the first update, then refreshed when Styler configuration
+changes or shared presets are explicitly updated.
 
 ## 📦 Installation via HACS
 
@@ -92,6 +94,116 @@ styler:
       border-color: red;
     }
 ```
+
+### Shared CSS presets
+
+Presets let you reuse CSS without replacing native cards or their visual editors.
+They contain CSS strings only: keep `card: true/false` explicit on each card.
+
+#### Install a shared resource
+
+Create `/config/www/styler-presets.js` on your Home Assistant installation:
+
+```javascript
+window.stylerPresets = {
+  "area-summary": `
+    #root {
+      grid-template-columns: minmax(0, 1fr) max-content !important;
+      align-items: stretch;
+      gap: 0 !important;
+      min-height: 240px;
+    }
+  `,
+  "area-summary-badges": `
+    .content {
+      display: none !important;
+    }
+    hui-heading-badge {
+      zoom: 1.75;
+    }
+  `,
+  compact: `
+    :host {
+      --ha-card-border-radius: 12px;
+    }
+  `,
+}
+
+window.dispatchEvent(new Event("styler-presets-changed"))
+```
+
+Register `/local/styler-presets.js` as an additional Lovelace **JavaScript module**
+resource (Settings → Dashboards → Resources, with advanced mode enabled).
+For YAML-managed resources:
+
+```yaml
+resources:
+  - url: /local/styler-presets.js
+    type: module
+```
+
+Keep the Styler resource registered too. Either resource load order works, provided
+the presets resource dispatches the event after assigning the registry. The registry
+is shared across dashboards in the same browser page; no backend integration or
+presets in dashboard YAML are needed.
+
+#### Use presets on cards
+
+Use one name:
+
+```yaml
+type: grid
+columns: 2
+styler:
+  card: true
+  preset: area-summary
+cards: ...
+```
+
+Or an ordered list, with optional local CSS overrides:
+
+```yaml
+styler:
+  preset:
+    - area-summary
+    - compact
+  style: |
+    :host {
+      --room-icon-size: 100px;
+    }
+```
+
+CSS is composed in this order: Styler's card CSS when `card: true`, then the named
+presets in list order, then local `style`. Normal CSS specificity and `!important`
+still apply. Existing Tile customization is preserved.
+
+Presets are inserted into the **same component shadow root** as local `styler.style`.
+Selectors cannot cross nested shadow roots, and parent presets are not automatically
+applied to children. For example, reference `area-summary` on the grid and
+`area-summary-badges` on its heading card separately. Existing parent `card`
+inheritance is unchanged.
+
+There is no variable substitution, YAML/card templating, or automatic nested-component
+targeting. Use CSS custom properties and local CSS for per-room differences.
+Unknown names and non-string definitions are skipped with console warnings; valid
+presets and local CSS still work. An absent registry is fine when no presets are used.
+
+#### Updating presets
+
+The resource can replace `window.stylerPresets` or edit individual entries. Dispatch
+`styler-presets-changed` afterward to refresh mounted cards, including presets that
+were previously missing. Deleting a definition and dispatching the event removes
+its CSS while retaining other presets and local styles.
+
+```javascript
+window.stylerPresets.compact = ":host { --ha-card-border-radius: 8px; }"
+window.dispatchEvent(new Event("styler-presets-changed"))
+```
+
+Editing the resource **file** does not execute it again in an already-open browser.
+Refresh the page after file edits; if cached, clear the cache or change the resource
+URL, for example `/local/styler-presets.js?v=2`. The event handles late resource
+execution and intentional runtime changes, not file watching.
 
 ## Configuring the sections view
 

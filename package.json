@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:tsc": "tsc && vite build",
     "check": "tsc",
+    "test": "pnpm build && node --test tests/*.test.mjs",
     "lint": "oxlint --deny-warnings",
     "lint:fix": "pnpm run lint --fix",
     "format": "oxfmt --write .",
