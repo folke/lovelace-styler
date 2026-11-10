@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.2.1](https://github.com/folke/lovelace-styler/compare/v3.2.0...v3.2.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* apply styles after native adopted stylesheets ([61e10e4](https://github.com/folke/lovelace-styler/commit/61e10e47096bd148a33288d6710f84ba31033dac))
+
+
+### Performance Improvements
+
+* only listen for preset changes in cards that use a preset ([044bdc5](https://github.com/folke/lovelace-styler/commit/044bdc58b803f020eeac70d616c3d886de87175a))
+* share and throttle preset warnings across cards ([76df98e](https://github.com/folke/lovelace-styler/commit/76df98e9f89f3f86794198b21b6bfbb18c64e4a6))
+
 ## [3.2.0](https://github.com/folke/lovelace-styler/compare/v3.1.1...v3.2.0) (2026-11-10)
 
 
