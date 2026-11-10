@@ -105,6 +105,8 @@ function attach(re: HTMLElement) {
     // Lit initializers run before subclass fields, so config getters are not safe yet.
     let config: StylerConfig | undefined
     let presetsChanged = false
+    let usesPresets = false
+    let listening = false
     const warnings = new Set<string>()
     const warn = (message: string) => {
       if (warnings.has(message)) return
@@ -117,15 +119,27 @@ function attach(re: HTMLElement) {
     }
     card.addController({
       hostConnected() {
-        window.addEventListener("styler-presets-changed", refreshPresets)
-        // Also catch registry changes made while this card was disconnected.
-        refreshPresets()
+        // Catch registry changes made while a preset-using card was disconnected.
+        if (usesPresets) refreshPresets()
       },
       hostDisconnected() {
+        if (!listening) return
         window.removeEventListener("styler-presets-changed", refreshPresets)
+        listening = false
       },
       hostUpdated() {
         const nextConfig = card._config?.styler
+        const preset = nextConfig?.preset
+        usesPresets = typeof preset === "string" || (Array.isArray(preset) && preset.length > 0)
+        const shouldListen = card.isConnected && usesPresets
+        if (shouldListen !== listening) {
+          if (shouldListen) {
+            window.addEventListener("styler-presets-changed", refreshPresets)
+          } else {
+            window.removeEventListener("styler-presets-changed", refreshPresets)
+          }
+          listening = shouldListen
+        }
         applyStyles(card, config !== nextConfig || presetsChanged, warn)
         config = nextConfig
         presetsChanged = false
