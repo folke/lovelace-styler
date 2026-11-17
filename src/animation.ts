@@ -1,6 +1,14 @@
 import type { StylerConfig } from "./types"
 
-export function getTileCardCSS(animation: StylerConfig["animation"]): string[] {
+export function getAnimationCSS(animation: StylerConfig["animation"], tagName: string): string[] {
+  let selector: string
+  if (tagName === "HUI-TILE-CARD") {
+    selector = `ha-tile-icon[data-state="on"]${animation === "spin" ? " ha-state-icon" : ""}`
+  } else if (tagName === "HUI-ENTITY-HEADING-BADGE") {
+    selector = ":host([data-styler-active]) ha-state-icon"
+  } else {
+    return []
+  }
   const css: string[] = []
 
   if (animation === "spin")
@@ -9,7 +17,7 @@ export function getTileCardCSS(animation: StylerConfig["animation"]): string[] {
         from {transform: rotate(0deg);}
         to {transform: rotate(360deg);}
       }
-      ha-tile-icon[data-state="on"] ha-state-icon {animation: spin 2s linear infinite;}
+      ${selector} {animation: spin 2s linear infinite;}
     `)
 
   if (animation === "pulse")
@@ -19,7 +27,7 @@ export function getTileCardCSS(animation: StylerConfig["animation"]): string[] {
         50% {opacity: 0;}
         100% {opacity: 1;}
       }
-      ha-tile-icon[data-state="on"] {animation: pulse 1s linear infinite;}
+      ${selector} {animation: pulse 1s linear infinite;}
     `)
 
   if (animation === "fade")
@@ -29,7 +37,7 @@ export function getTileCardCSS(animation: StylerConfig["animation"]): string[] {
         50% {opacity: 0.5;}
         100% {opacity: 1;}
       }
-      ha-tile-icon[data-state="on"] {animation: fade 2s linear infinite;}
+      ${selector} {animation: fade 2s linear infinite;}
     `)
 
   return css

@@ -180,6 +180,17 @@ class Card extends ReactiveElement {
     this.connected = false
     this.disconnectedCallback()
   }
+  _attributes = new Set()
+  hasAttribute(name) {
+    return this._attributes.has(name)
+  }
+  toggleAttribute(name, force) {
+    if (force) this._attributes.add(name)
+    else this._attributes.delete(name)
+  }
+  removeAttribute(name) {
+    this._attributes.delete(name)
+  }
   get css() {
     return this._styler?.cssText ?? this._styler?.styleEl?.innerHTML
   }
@@ -862,4 +873,77 @@ test("instance-field setConfig replacements are wrapped on connect and remain id
   await card.updateComplete
   assert.equal(card.css, undefined)
   assert.equal(card.count, 2)
+})
+
+async function headingBadge(animation, state = "off") {
+  const card = new Card({ styler: { animation } }, "HUI-ENTITY-HEADING-BADGE")
+  cards.push(card)
+  card.icon = { stateObj: { state } }
+  card.iconQueries = 0
+  card.shadowRoot.adoptedStyleSheets = []
+  card.shadowRoot.querySelector = (selector) => {
+    assert.equal(selector, 'ha-state-icon[slot="icon"]')
+    card.iconQueries++
+    return card.icon
+  }
+  await card.connect()
+  return card
+}
+
+test("heading badge animation follows exact on state without rebuilding its sheet", async () => {
+  globalThis.CSSStyleSheet = StyleSheet
+  const badge = await headingBadge("spin")
+  const sheet = badge._styler.styleSheet
+  assert.match(sheet.cssText, /:host\(\[data-styler-active\]\) ha-state-icon/)
+  assert.equal(badge.hasAttribute("data-styler-active"), false)
+  for (const state of ["on", "off", "unknown", "unavailable", "playing", "on"]) {
+    badge.icon.stateObj = { state }
+    badge.requestUpdate()
+    await badge.updateComplete
+    assert.equal(badge.hasAttribute("data-styler-active"), state === "on")
+    assert.equal(badge._styler.styleSheet, sheet)
+    assert.equal(sheet.replacements, 1)
+  }
+  badge.disconnect()
+  assert.equal(badge.hasAttribute("data-styler-active"), false)
+  await badge.connect()
+  assert.equal(badge.hasAttribute("data-styler-active"), true)
+})
+
+test("heading badge handles missing icons, changed animation and removed config", async () => {
+  const badge = await headingBadge("pulse", "on")
+  assert.match(badge.css, /animation: pulse/)
+  assert.equal(badge.hasAttribute("data-styler-active"), true)
+  badge.icon = null
+  badge.requestUpdate()
+  await badge.updateComplete
+  assert.equal(badge.hasAttribute("data-styler-active"), false)
+  badge.icon = { stateObj: undefined }
+  badge.requestUpdate()
+  await badge.updateComplete
+  assert.equal(badge.hasAttribute("data-styler-active"), false)
+  badge.icon = { stateObj: { state: "on" } }
+  badge._config = { styler: { animation: "fade" } }
+  badge.requestUpdate()
+  await badge.updateComplete
+  assert.match(badge.css, /animation: fade/)
+  assert.equal(badge.hasAttribute("data-styler-active"), true)
+  badge._config = {}
+  badge.requestUpdate()
+  await badge.updateComplete
+  assert.equal(badge.css, undefined)
+  assert.equal(badge.hasAttribute("data-styler-active"), false)
+  const queries = badge.iconQueries
+  badge.requestUpdate()
+  await badge.updateComplete
+  assert.equal(badge.iconQueries, queries)
+})
+
+test("heading badges without valid animation do not inspect icons", async () => {
+  for (const animation of [undefined, "invalid"]) {
+    const badge = await headingBadge(animation, "on")
+    assert.equal(badge.iconQueries, 0)
+    assert.equal(badge.hasAttribute("data-styler-active"), false)
+    assert.equal(badge.css, undefined)
+  }
 })

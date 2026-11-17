@@ -8,7 +8,7 @@ import { getPresetCSS } from "./presets"
 import { applyCSS } from "./styles"
 import { suppressCard } from "./suppression"
 import type { Card, StylerConfig } from "./types"
-import { getTileCardCSS } from "./tile"
+import { getAnimationCSS } from "./animation"
 
 let CARD_CSS = ""
 const connected = new Map<Card, () => void>()
@@ -56,7 +56,7 @@ function applyStyles(card: Card, config: StylerConfig | undefined) {
   if (state.card) css.push(CARD_CSS)
   css.push(...getPresetCSS(state.preset))
   if (state.style) css.push(state.style)
-  if (card.tagName === "HUI-TILE-CARD") css.push(...getTileCardCSS(state.animation))
+  css.push(...getAnimationCSS(state.animation, card.tagName))
   applyCSS(card.shadowRoot, state, css.length ? css.join("\n") : undefined)
 
   if (card.tagName === "HA-CARD") {
@@ -74,6 +74,7 @@ function attach(re: HTMLElement) {
   let dirty = true
   let listening = false
   let previousParent: Node | null
+  let badgeAnimated = false
   const refresh = () => {
     dirty = true
     card.requestUpdate()
@@ -89,10 +90,28 @@ function attach(re: HTMLElement) {
       connected.delete(card)
       if (listening) window.removeEventListener("styler-presets-changed", refresh)
       listening = false
+      if (badgeAnimated) card.removeAttribute("data-styler-active")
     },
     hostUpdated() {
       if (!card.isConnected) return
       const nextConfig = getStylerConfig(card)
+      if (card.tagName === "HUI-ENTITY-HEADING-BADGE") {
+        const animation = nextConfig?.animation
+        const animated = animation === "spin" || animation === "pulse" || animation === "fade"
+        if (animated || badgeAnimated) {
+          // HA exposes stateObj as a property, not a CSS-selectable attribute.
+          const icon = animated
+            ? card.shadowRoot?.querySelector<HTMLElement & { stateObj?: { state: string } }>(
+                'ha-state-icon[slot="icon"]'
+              )
+            : undefined
+          const active = icon?.stateObj?.state === "on"
+          if (card.hasAttribute("data-styler-active") !== active) {
+            card.toggleAttribute("data-styler-active", active)
+          }
+        }
+        badgeAnimated = animated
+      }
       const preset = nextConfig?.preset
       const usesPresets = typeof preset === "string" || (Array.isArray(preset) && preset.length > 0)
       if (usesPresets !== listening) {

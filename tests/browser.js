@@ -1,4 +1,4 @@
-import { ReactiveElement, css } from "lit"
+import { LitElement, ReactiveElement, css, html } from "lit"
 
 let assertions = 0
 function assert(condition, message) {
@@ -177,6 +177,80 @@ try {
   await settle(tile)
   assert(!!tile._styler.styleEl, "import CSS uses DOM fallback")
   assert(getComputedStyle(tile).color === "rgb(0, 0, 255)", "fallback CSS renders")
+
+  class HeadingWrapper extends ReactiveElement {
+    createRenderRoot() {
+      return this
+    }
+  }
+  class EntityHeadingBadge extends LitElement {
+    static properties = { entityState: {}, iconVisible: {} }
+    constructor() {
+      super()
+      this.entityState = "off"
+      this.iconVisible = true
+    }
+    setConfig(_config) {}
+    render() {
+      return html`<ha-heading-badge>
+        ${
+          this.iconVisible
+            ? html`<ha-state-icon
+                slot="icon"
+                .stateObj=${{ state: this.entityState }}
+              ></ha-state-icon>`
+            : null
+        }
+        <span id="state">${this.entityState}</span>
+      </ha-heading-badge>`
+    }
+  }
+  customElements.define("hui-heading-badge", HeadingWrapper)
+  customElements.define("hui-entity-heading-badge", EntityHeadingBadge)
+  const wrapper = new HeadingWrapper()
+  const badge = new EntityHeadingBadge()
+  wrapper.append(badge)
+  document.body.append(wrapper)
+  await settle(wrapper, badge)
+  for (const animation of ["spin", "pulse", "fade"]) {
+    configure(badge, { styler: { animation } })
+    await settle(badge)
+    const badgeSheet = badge._styler.styleSheet
+    for (const state of ["off", "on", "unavailable", "unknown", "playing", "on"]) {
+      badge.entityState = state
+      await settle(badge)
+      const badgeIcon = badge.shadowRoot.querySelector("ha-state-icon")
+      assert(
+        getComputedStyle(badgeIcon).animationName === (state === "on" ? animation : "none"),
+        `${animation} heading badge follows ${state}`
+      )
+      assert(badge._styler.styleSheet === badgeSheet, "heading state change reuses stylesheet")
+      assert(
+        getComputedStyle(badge.shadowRoot.querySelector("#state")).animationName === "none",
+        "badge text does not animate"
+      )
+    }
+  }
+  badge.iconVisible = false
+  await settle(badge)
+  assert(!badge.hasAttribute("data-styler-active"), "missing icon disables heading animation")
+  badge.iconVisible = true
+  await settle(badge)
+  assert(
+    badge.hasAttribute("data-styler-active"),
+    "returning on-state icon enables heading animation"
+  )
+  configure(badge, {})
+  await settle(badge)
+  assert(!badge.hasAttribute("data-styler-active"), "removed heading animation clears active flag")
+  assert(!badge._styler.styleSheet, "removed heading animation releases stylesheet")
+  configure(badge, { styler: { animation: "spin" } })
+  await settle(badge)
+  wrapper.remove()
+  assert(!badge.hasAttribute("data-styler-active"), "disconnect clears heading animation flag")
+  document.body.append(wrapper)
+  await settle(wrapper, badge)
+  assert(badge.hasAttribute("data-styler-active"), "reconnect refreshes heading animation flag")
 
   const editor = new Editor()
   await editor.getConfigElement()

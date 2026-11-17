@@ -217,7 +217,7 @@ styler:
 sections: ...
 ```
 
-## Tile Card Customization
+## Tile and Heading Badge Animations
 
 ```yaml
 type: tile
@@ -225,8 +225,25 @@ styler:
   animation: spin # spin | pulse | fade
 ```
 
-Animations are interpreted only on native Tile cards. Other card types ignore
-`styler.animation`.
+Animations run only while the entity state is exactly `on`. Native Tile cards and
+entity badges inside Heading cards support `styler.animation`; other card types
+ignore it.
+
+```yaml
+type: heading
+badges:
+  - type: entity
+    entity: fan.bedroom
+    show_icon: true
+    show_state: false
+    styler:
+      animation: spin # spin | pulse | fade
+```
+
+For heading badges, only the icon animates, not the state text. An absent icon or
+an `off`, `unknown`, `unavailable`, or other non-`on` state does not animate.
+Styler bridges the icon's state to a CSS attribute during the badge's normal Lit
+updates; state changes do not rebuild the stylesheet or require observers.
 
 ### Migrating from v3
 
