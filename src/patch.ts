@@ -1,13 +1,8 @@
 import type { ReactiveElement } from "lit"
 
-function getCustomElements() {
-  const ce = customElements as any
-  const els = (ce.l ?? ce.h) as Map<string, CustomElementConstructor>
-  return [...els.keys()].map((k) => ({
-    name: k,
-    constructor: customElements.get(k) as CustomElementConstructor,
-  }))
-}
+import { getCustomElements } from "./compat"
+
+let installed = false
 
 function isCustomElement(el: Element | ShadowRoot): el is HTMLElement {
   if (!(el instanceof HTMLElement)) return false
@@ -39,35 +34,34 @@ function walk(element: Element | ShadowRoot, callback: (elem: HTMLElement) => vo
 }
 
 export class Patcher {
-  enabled = true
+  private patched = new WeakSet<CustomElementConstructor>()
 
   constructor(private attach: (el: HTMLElement) => void) {
-    if (this.enabled) {
-      // Override customElements.define to patch new elements
-      const define = customElements.define.bind(customElements)
-      customElements.define = (
-        name: string,
-        constructor: CustomElementConstructor,
-        options?: ElementDefinitionOptions
-      ) => {
-        // this.patch(name, customElements.get(name) as CustomElementConstructor)
-        this.patch(name, constructor)
-        define(name, constructor, options)
-      }
-
-      // Patch existing elements
-      getCustomElements().forEach(({ name, constructor }) => this.patch(name, constructor))
+    if (installed) return
+    installed = true
+    const define = customElements.define.bind(customElements)
+    customElements.define = (
+      name: string,
+      constructor: CustomElementConstructor,
+      options?: ElementDefinitionOptions
+    ) => {
+      this.patch(constructor)
+      define(name, constructor, options)
     }
+
+    getCustomElements().forEach((constructor) => this.patch(constructor))
 
     // Attach to existing elements on the page
-    walk(document.body, (el) => this._attach(el))
+    walk(document.body, (el) => {
+      this.patch(el.constructor as CustomElementConstructor)
+      this._attach(el)
+    })
   }
 
-  patch(_name: string, constructor: CustomElementConstructor) {
-    if (isLitClass(constructor)) {
-      // console.log("Patching", name)
-      constructor.addInitializer((el: HTMLElement) => this._attach(el))
-    }
+  patch(constructor: CustomElementConstructor) {
+    if (!isLitClass(constructor) || this.patched.has(constructor)) return
+    this.patched.add(constructor)
+    constructor.addInitializer((el: HTMLElement) => this._attach(el))
   }
 
   _attach(el: HTMLElement) {
@@ -79,11 +73,11 @@ export class Patcher {
 }
 
 function isLitClass(constructor: unknown): constructor is typeof ReactiveElement {
-  return (constructor as typeof ReactiveElement).addInitializer !== undefined
+  return typeof (constructor as typeof ReactiveElement)?.addInitializer === "function"
 }
 
 export function isReactiveController(el: unknown): el is ReactiveElement {
-  return (el as ReactiveElement).addController !== undefined
+  return typeof (el as ReactiveElement)?.addController === "function"
 }
 
 export function override<

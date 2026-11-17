@@ -24,7 +24,8 @@ This plugin works by hooking into [Lit](https://lit.dev)'s [reactive life-cycle]
 using [ReactiveElement.addInitializer](https://lit.dev/docs/components/lifecycle/#addInitializer)
 and a custom [Reactive Controller](https://lit.dev/docs/composition/controllers/#lifecycle).
 Styles are applied after the first update, then refreshed when Styler configuration
-changes or shared presets are explicitly updated.
+changes, inherited card settings change, cards reconnect, or shared presets are
+explicitly updated. Ordinary state updates reuse the existing stylesheets.
 
 ## 📦 Installation via HACS
 
@@ -34,7 +35,7 @@ Have [HACS](https://hacs.xyz/) installed, this will allow you to update easily.
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=folke&repository=lovelace-styler&category=plugin)
 
-(If the button above doesn't work, add `https://github.com/folke/lovelace-styler` as a custom repository of type Integration in HACS.)
+(If the button above doesn't work, add `https://github.com/folke/lovelace-styler` as a custom repository of type Dashboard (plugin) in HACS.)
 
 - Click Download on the HACS page
 - Reload the Home Assistant web page
@@ -214,10 +215,23 @@ sections: ...
 
 ```yaml
 type: tile
-info: false # hides the info section, so only shows the icon
-animation: spin # adds a spinning animation to the icon
-animation: pulse # adds a pulsing animation to the icon
+styler:
+  animation: spin # spin | pulse | fade
 ```
+
+Animations are interpreted only on native Tile cards. Other card types ignore
+`styler.animation`.
+
+### Migrating from v3
+
+Move top-level `animation` into `styler.animation`. Styler no longer reads top-level
+`animation` or `info`, and `styler.info` is not supported. Use Home Assistant's
+native Tile visibility settings to hide the name/state. The former `info: false`
+shortcut also hid features and adjusted spacing; use custom CSS if you still need
+that icon-only layout. The unused `spin_icon` option has also been removed.
+
+The visual editor preserves the entire `styler` block. All other fields belong to
+the card and are passed through unchanged.
 
 ## 🏠 Example: Room Summary with Native Cards
 

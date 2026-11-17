@@ -70,11 +70,12 @@ class Editor {
 }
 Object.assign(globalThis, {
   customElements: {
-    l: registry,
+    l: { keys: "not a registry" },
+    h: registry,
     get: (name) => registry.get(name),
     define: (name, klass) => registry.set(name, klass),
     whenDefined: (name) =>
-      Promise.resolve(name === "ha-card" ? { styles: { cssText: "/* card CSS */" } } : Editor),
+      Promise.resolve(name === "ha-card" ? { styles: [[{ cssText: "/* card CSS */" }]] } : Editor),
   },
 })
 window.stylerPresets = { early: "/* loaded before Styler */" }
@@ -87,6 +88,38 @@ function cardListenerCount() {
   return window.listeners.size - 1
 }
 
+function inlineStyle() {
+  const style = { border: "", boxShadow: "", background: "" }
+  const priorities = new Map()
+  const key = (name) => name.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())
+  Object.defineProperties(style, {
+    [Symbol.iterator]: {
+      value: function* () {
+        for (const name of Object.keys(this)) {
+          if (this[name]) yield name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)
+        }
+      },
+    },
+    getPropertyValue: { value: (name) => style[key(name)] ?? "" },
+    getPropertyPriority: { value: (name) => priorities.get(name) ?? "" },
+    setProperty: {
+      value: (name, value, priority = "") => {
+        style[key(name)] = value
+        priorities.set(name, priority)
+      },
+    },
+    removeProperty: {
+      value: (name) => {
+        const value = style[key(name)]
+        style[key(name)] = ""
+        priorities.delete(name)
+        return value
+      },
+    },
+  })
+  return style
+}
+
 class Card extends ReactiveElement {
   constructor(config = {}, tagName = "TEST-CARD", parent = null) {
     super()
@@ -94,7 +127,7 @@ class Card extends ReactiveElement {
     this._tagName = tagName
     this._parent = parent
     this._root = new ShadowRoot(this)
-    this.style = { border: "", boxShadow: "", background: "" }
+    this.style = inlineStyle()
     this.updatesRequested = 0
   }
   get _config() {
@@ -179,8 +212,7 @@ test("no preset preserves existing card, local, tile and background behavior", a
   assert.equal(empty.css, undefined)
   const card = await mount({ styler: { card: true, style: "/* local */" } })
   assert.equal(card.css, "/* card CSS */:host{overflow:hidden}\n/* local */")
-  const tile = await mount({ info: false, animation: "spin" }, "HUI-TILE-CARD")
-  assert.match(tile.css, /ha-tile-info/)
+  const tile = await mount({ styler: { animation: "spin" } }, "HUI-TILE-CARD")
   assert.match(tile.css, /@keyframes spin/)
   const borderless = await mount({ styler: { card: false } }, "HA-CARD")
   assert.deepEqual(borderless.style, { border: "none", boxShadow: "none", background: "none" })
@@ -531,4 +563,151 @@ test("visual editor round trip preserves preset configuration", async () => {
   editor._handleUIConfigChanged({ detail: { config: { type: "grid", columns: 3 } } })
   assert.deepEqual(editor.received.styler, styler)
   assert.equal(editor.received.columns, 3)
+})
+
+test("tile-only config changes refresh generated CSS", async () => {
+  const card = await mount({ styler: { animation: "spin" } }, "HUI-TILE-CARD")
+  card._config = { styler: { animation: "fade" } }
+  card.requestUpdate()
+  await card.updateComplete
+  assert.doesNotMatch(card.css, /ha-tile-info/)
+  assert.match(card.css, /@keyframes fade/)
+})
+
+test("removing card:false restores suppressed inline styles", async () => {
+  const card = await mount({ styler: { card: false } }, "HA-CARD")
+  card._config = {}
+  card.requestUpdate()
+  await card.updateComplete
+  assert.deepEqual(card.style, { border: "", boxShadow: "", background: "" })
+})
+
+test("inherited card state refreshes after ancestor changes", async () => {
+  const parent = await mount({ styler: { card: true } })
+  const child = await mount({}, "HA-CARD", parent.shadowRoot)
+  parent._config = {}
+  parent.requestUpdate()
+  await parent.updateComplete
+  await child.updateComplete
+  assert.equal(child._styler.parent_card, undefined)
+  assert.equal(child.style.background, "")
+})
+
+test("reusing an editor preserves custom options", async () => {
+  const editor = new Editor()
+  await editor.getConfigElement()
+  const element = await editor.getConfigElement()
+  const styler = { preset: "shared" }
+  element.setConfig({ type: "grid", styler })
+  editor._handleUIConfigChanged({ detail: { config: { type: "grid", columns: 2 } } })
+  assert.deepEqual(editor.received.styler, styler)
+})
+
+test("custom-card editor receives its own info and animation fields", async () => {
+  const editor = new Editor()
+  const element = await editor.getConfigElement()
+  element.setConfig({ type: "custom:example-card", info: "details", animation: "custom-animation" })
+  assert.equal(element.received.info, "details")
+  assert.equal(element.received.animation, "custom-animation")
+  editor._handleUIConfigChanged({
+    detail: { config: { type: "custom:example-card", info: "new", animation: "changed" } },
+  })
+  assert.equal(editor.received.info, "new")
+  assert.equal(editor.received.animation, "changed")
+})
+
+test("legacy tile options and animation on non-tile cards are ignored", async () => {
+  const legacy = await mount(
+    { info: false, animation: "spin", styler: { info: false } },
+    "HUI-TILE-CARD"
+  )
+  assert.equal(legacy.css, undefined)
+  const other = await mount({ styler: { animation: "spin" } })
+  assert.equal(other.css, undefined)
+})
+
+test("removing tile animation removes only its generated styles", async () => {
+  const card = await mount(
+    { styler: { animation: "pulse", style: "/* local */" } },
+    "HUI-TILE-CARD"
+  )
+  assert.match(card.css, /@keyframes pulse/)
+  card._config = { styler: { style: "/* local */" } }
+  card.requestUpdate()
+  await card.updateComplete
+  assert.equal(card.css, "/* local */")
+})
+
+test("suppression restores original values and priorities without overwriting later changes", async () => {
+  const card = new Card({ styler: { card: false } }, "HA-CARD")
+  cards.push(card)
+  card.style.setProperty("border", "2px solid red", "important")
+  card.style.setProperty("box-shadow", "0 0 2px blue")
+  card.style.setProperty("background", "red")
+  await card.connect()
+  card.style.setProperty("background", "green", "important")
+  card._config = {}
+  card.requestUpdate()
+  await card.updateComplete
+  assert.equal(card.style.border, "2px solid red")
+  assert.equal(card.style.getPropertyPriority("border"), "important")
+  assert.equal(card.style.boxShadow, "0 0 2px blue")
+  assert.equal(card.style.background, "green")
+  assert.equal(card.style.getPropertyPriority("background"), "important")
+})
+
+test("preview refreshes never clear inline styles not owned by Styler", async () => {
+  const preview = await mount({}, "HUI-CARD-PREVIEW")
+  const card = await mount({}, "HA-CARD", preview.shadowRoot)
+  card.editMode = true
+  card.style.background = "none"
+  card.requestUpdate()
+  await card.updateComplete
+  assert.equal(card.style.background, "none")
+})
+
+test("adding ancestor card settings refreshes descendants, not unrelated cards", async () => {
+  const parent = await mount()
+  const child = await mount({}, "HA-CARD", parent.shadowRoot)
+  const other = await mount()
+  const requests = other.updatesRequested
+  parent._config = { styler: { card: true } }
+  parent.requestUpdate()
+  await parent.updateComplete
+  await child.updateComplete
+  assert.equal(child.style.background, "none")
+  assert.equal(other.updatesRequested, requests)
+})
+
+test("nearest ancestor settings win and reconnect refreshes reparented cards", async () => {
+  const outer = await mount({ styler: { card: true } })
+  const inner = await mount({ styler: { card: false } }, "TEST-CARD", outer.shadowRoot)
+  const child = await mount({}, "HA-CARD", inner.shadowRoot)
+  assert.equal(child._styler.parent_card, false)
+  child.disconnect()
+  child._parent = null
+  await child.connect()
+  assert.equal(child._styler.parent_card, undefined)
+  assert.equal(child.style.background, "")
+  child.disconnect()
+  child._parent = outer.shadowRoot
+  await child.connect()
+  assert.equal(child._styler.parent_card, true)
+  assert.equal(child.style.background, "none")
+})
+
+test("editor reuse clears removed Styler options and preserves tile animation", async () => {
+  const editor = new Editor()
+  const element = await editor.getConfigElement()
+  const styler = { animation: "fade" }
+  element.setConfig({ type: "tile", styler })
+  assert.equal(element.received.styler, undefined)
+  editor._handleUIConfigChanged({ detail: { config: { type: "tile" } } })
+  assert.deepEqual(editor.received.styler, styler)
+  element.setConfig({ type: "custom:example-card", animation: "custom" })
+  editor._handleUIConfigChanged({
+    detail: { config: { type: "custom:example-card", animation: "next" } },
+  })
+  assert.equal(editor.received.styler, undefined)
+  assert.equal(editor.received.animation, "next")
 })

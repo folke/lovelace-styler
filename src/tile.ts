@@ -1,25 +1,9 @@
-import type { TileCard } from "./types"
+import type { StylerConfig } from "./types"
 
-export function getTileCardCSS(card: TileCard): string[] {
+export function getTileCardCSS(animation: StylerConfig["animation"]): string[] {
   const css: string[] = []
-  if (card._config?.info === false)
-    css.push(`
-      ha-tile-info {
-        display: none;
-      }
-      hui-card-features {
-        display: none;
-      }
-      .content {
-        padding: 0 !important;
-      }
-      .icon-container {
-        margin-inline-start: 0;
-        margin: 2px;
-      }
-    `)
 
-  if (card._config?.animation === "spin")
+  if (animation === "spin")
     css.push(`
       @keyframes spin {
         from {transform: rotate(0deg);}
@@ -28,7 +12,7 @@ export function getTileCardCSS(card: TileCard): string[] {
       ha-tile-icon[data-state="on"] ha-state-icon {animation: spin 2s linear infinite;}
     `)
 
-  if (card._config?.animation === "pulse")
+  if (animation === "pulse")
     css.push(`
       @keyframes pulse {
         0% {opacity: 1;}
@@ -38,7 +22,7 @@ export function getTileCardCSS(card: TileCard): string[] {
       ha-tile-icon[data-state="on"] {animation: pulse 1s linear infinite;}
     `)
 
-  if (card._config?.animation === "fade")
+  if (animation === "fade")
     css.push(`
       @keyframes fade {
         0% {opacity: 1;}

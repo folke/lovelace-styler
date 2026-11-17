@@ -1,146 +1,127 @@
-import type { CSSResult, LitElement } from "lit"
+import type { LitElement } from "lit"
 import "./editor"
 
 import { Patcher, isReactiveController } from "./patch"
+import { getStylesCSS } from "./compat"
 import { getPresetCSS } from "./presets"
 import { applyCSS } from "./styles"
-import type { Card, StylerConfig, StylerState, TileCard } from "./types"
+import { suppressCard } from "./suppression"
+import type { Card, StylerConfig } from "./types"
 import { getTileCardCSS } from "./tile"
 
 let CARD_CSS = ""
+const connected = new Map<Card, () => void>()
 
-// Check if we need to apply styles to the element or any of its ancestors
-// This function will be called only once per element
-function getState(node?: Node): StylerState | undefined {
-  if (!node) return
+function parent(node: Node): Node | null {
+  return (
+    (node as Element).assignedSlot ?? (node instanceof ShadowRoot ? node.host : node.parentNode)
+  )
+}
 
-  const card = node as Card
-
-  const parentNode =
-    node instanceof ShadowRoot ? node.host : (node.parentElement ?? node.parentNode ?? undefined)
-  const parentState = getState(parentNode)
-
-  return {
-    ...card._config?.styler,
-    styleEl: card._styler?.styleEl,
-    styleSheet: card._styler?.styleSheet,
-    styleRoot: card._styler?.styleRoot,
-    cssText: card._styler?.cssText,
-    parent_card: parentState?.card ?? parentState?.parent_card,
+function inheritedCard(card: Card): boolean | undefined {
+  for (let node = parent(card); node; node = parent(node)) {
+    const value = (node as Card)._config?.styler?.card
+    if (value !== undefined) return value
   }
 }
 
-// Check if the element is in preview mode
-function isPreview(node?: Node): boolean {
-  if (!node) return false
-
-  const card = node as Card
-
-  if (card.tagName === "HUI-CARD-PREVIEW") return true
-
-  const parentNode =
-    node instanceof ShadowRoot ? node.host : (node.parentElement ?? node.parentNode ?? undefined)
-  return isPreview(parentNode)
+function refreshDescendants(ancestor: Card) {
+  // Configuration changes are rare; ordinary hass updates never walk descendants.
+  for (const [card, refresh] of connected) {
+    for (let node = parent(card); node; node = parent(node)) {
+      if (node === ancestor) {
+        refresh()
+        break
+      }
+    }
+  }
 }
 
-function applyStyles(card: Card, force: boolean) {
-  const isPreviewMode = card.editMode && isPreview(card)
+function isPreview(node: Node): boolean {
+  for (let current: Node | null = node; current; current = parent(current)) {
+    if ((current as Element).tagName === "HUI-CARD-PREVIEW") return true
+  }
+  return false
+}
 
-  if (!force && card._styler && !isPreviewMode) return
-
-  const state = (card._styler = getState(card))
-
-  if (!state) return
-
+function applyStyles(card: Card) {
+  const state = (card._styler ??= {})
+  const config = card._config?.styler
+  state.card = config?.card
+  state.preset = config?.preset
+  state.style = config?.style
+  state.animation = config?.animation
+  state.parent_card = inheritedCard(card)
   const css: string[] = []
-
-  // Should we style this as a card?
-  if (state.card) {
-    css.push(CARD_CSS)
-  }
-
+  if (state.card) css.push(CARD_CSS)
   css.push(...getPresetCSS(state.preset))
-
-  // Do we have any custom styles to apply?
   if (state.style) css.push(state.style)
+  if (card.tagName === "HUI-TILE-CARD") css.push(...getTileCardCSS(state.animation))
+  applyCSS(card.shadowRoot, state, css.length ? css.join("\n") : undefined)
 
-  if (card.tagName.toLowerCase() === "hui-tile-card") {
-    css.push(...getTileCardCSS(card as TileCard))
-  }
-
-  const cssText = css.length ? css.join("\n") : undefined
-
-  applyCSS(card.shadowRoot, state, cssText)
-
-  if (isPreviewMode && card.style) {
-    if (card.style.border === "none") card.style.border = ""
-    if (card.style.boxShadow === "none") card.style.boxShadow = ""
-    if (card.style.background === "none") card.style.background = ""
-  }
-
-  // Remove the card styles if either:
-  // - the parent is styled as a card
-  // - the parent doesn't want to be styled as a card
-  // - the card itself doesn't want to be styled as a card
-  if (
-    card.tagName === "HA-CARD" &&
-    (state.card === false || state.parent_card || state.parent_card === false)
-  ) {
-    card.style.border = "none"
-    card.style.boxShadow = "none"
-    card.style.background = "none"
+  if (card.tagName === "HA-CARD") {
+    suppressCard(card, state.card === false || state.parent_card !== undefined)
   }
 }
 
 function attach(re: HTMLElement) {
   const card = re as Card
+  if (!isReactiveController(card)) return
 
-  if (isReactiveController(card)) {
-    // Lit initializers run before subclass fields, so config getters are not safe yet.
-    let config: StylerConfig | undefined
-    let presetsChanged = false
-    let usesPresets = false
-    let listening = false
-    const refreshPresets = () => {
-      presetsChanged = true
-      card.requestUpdate()
-    }
-    card.addController({
-      hostConnected() {
-        // Catch registry changes made while a preset-using card was disconnected.
-        if (usesPresets) refreshPresets()
-      },
-      hostDisconnected() {
-        if (!listening) return
-        window.removeEventListener("styler-presets-changed", refreshPresets)
-        listening = false
-      },
-      hostUpdated() {
-        const nextConfig = card._config?.styler
-        const preset = nextConfig?.preset
-        usesPresets = typeof preset === "string" || (Array.isArray(preset) && preset.length > 0)
-        const shouldListen = card.isConnected && usesPresets
-        if (shouldListen !== listening) {
-          if (shouldListen) {
-            window.addEventListener("styler-presets-changed", refreshPresets)
-          } else {
-            window.removeEventListener("styler-presets-changed", refreshPresets)
-          }
-          listening = shouldListen
-        }
-        applyStyles(card, config !== nextConfig || presetsChanged)
-        config = nextConfig
-        presetsChanged = false
-      },
-    })
+  // Lit initializers run before subclass fields, so config getters are not safe yet.
+  let config: StylerConfig | undefined
+  let cardOption: boolean | undefined
+  let dirty = true
+  let listening = false
+  let previousParent: Node | null
+  const refresh = () => {
+    dirty = true
     card.requestUpdate()
   }
+  card.addController({
+    hostConnected() {
+      connected.set(card, refresh)
+      refresh()
+    },
+    hostDisconnected() {
+      connected.delete(card)
+      if (listening) window.removeEventListener("styler-presets-changed", refresh)
+      listening = false
+    },
+    hostUpdated() {
+      if (!card.isConnected) return
+      const nextConfig = card._config?.styler
+      const preset = nextConfig?.preset
+      const usesPresets = typeof preset === "string" || (Array.isArray(preset) && preset.length > 0)
+      if (usesPresets !== listening) {
+        if (usesPresets) window.addEventListener("styler-presets-changed", refresh)
+        else window.removeEventListener("styler-presets-changed", refresh)
+        listening = usesPresets
+      }
+
+      const nextCardOption = nextConfig?.card
+      const nextParent = parent(card)
+      const cardChanged = cardOption !== nextCardOption
+      if (
+        dirty ||
+        config !== nextConfig ||
+        cardChanged ||
+        previousParent !== nextParent ||
+        (card.editMode && isPreview(card))
+      ) {
+        applyStyles(card)
+        dirty = false
+      }
+      config = nextConfig
+      cardOption = nextCardOption
+      previousParent = nextParent
+      if (cardChanged) refreshDescendants(card)
+    },
+  })
+  card.requestUpdate()
 }
 
 void customElements.whenDefined("ha-card").then((el) => {
-  const card = el as typeof LitElement
-  // Store the original styles for an ha-card
-  CARD_CSS = (card.styles as CSSResult).cssText
-  CARD_CSS += ":host{overflow:hidden}"
+  CARD_CSS = getStylesCSS((el as typeof LitElement).styles) + ":host{overflow:hidden}"
   new Patcher(attach)
 })

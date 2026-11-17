@@ -1,48 +1,40 @@
 import { override } from "./patch"
-import type { StylerConfig, TileConfig } from "./types"
+import type { StylerConfig } from "./types"
 
-type CustomConfig = TileConfig & {
-  styler?: StylerConfig
-}
+type Config = Record<string, unknown> & { styler?: StylerConfig }
 
 type ConfigElement = {
-  setConfig: (config: { styler?: StylerConfig }) => void
-  _stylerConfig?: CustomConfig
+  setConfig: (config: Config) => void
 }
 
 type CardElementEditor = {
   getConfigElement: () => Promise<ConfigElement | undefined>
   _configElement?: ConfigElement
-  _handleUIConfigChanged: (ev: CustomEvent<{ config: { styler?: StylerConfig } }>) => void
+  _handleUIConfigChanged: (ev: CustomEvent<{ config: Config }>) => void
 }
+
+const configurations = new WeakMap<ConfigElement, StylerConfig | undefined>()
 
 void customElements.whenDefined("hui-card-element-editor").then((el) => {
   const editor = el.prototype as CardElementEditor
 
   override(editor, "getConfigElement", async function (orig) {
     const configEl = await orig()
-    if (!configEl) return configEl
+    if (!configEl || configurations.has(configEl)) return configEl
 
-    // Temporarily store the styler config and remove it from the original config
-    // This is to ensure the visual editor works as expected
-    override(configEl, "setConfig", function (orig, config) {
-      const newConfig = JSON.parse(JSON.stringify(config)) as CustomConfig
-      this._stylerConfig = {
-        styler: newConfig.styler,
-        info: newConfig.info,
-        animation: newConfig.animation,
-      }
-      delete newConfig.styler
-      delete newConfig.info
-      delete newConfig.animation
-      orig(newConfig)
+    configurations.set(configEl, undefined)
+    override(configEl, "setConfig", function (original, config) {
+      // Native editors must not validate or discard Styler-owned options.
+      const { styler, ...nativeConfig } = config
+      configurations.set(this, styler)
+      original(nativeConfig)
     })
     return configEl
   })
 
-  // Reapply the styler config when the UI config changes
   override(editor, "_handleUIConfigChanged", function (orig, ev) {
-    Object.assign(ev.detail.config, this._configElement?._stylerConfig ?? {})
+    const styler = this._configElement && configurations.get(this._configElement)
+    if (styler !== undefined) ev.detail.config.styler = styler
     orig(ev)
   })
 })
