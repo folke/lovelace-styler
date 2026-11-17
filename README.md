@@ -27,6 +27,12 @@ Styles are applied after the first update, then refreshed when Styler configurat
 changes, inherited card settings change, cards reconnect, or shared presets are
 explicitly updated. Ordinary state updates reuse the existing stylesheets.
 
+Styler captures only the `styler` block from successful `setConfig()` calls; cards
+do not need to keep their full configuration in a particular property. For cards
+configured before Styler loads, it tries `_config.styler` and `config.styler` as
+best-effort fallbacks. If neither is available, settings become available on the
+next intercepted `setConfig()` call.
+
 ## 📦 Installation via HACS
 
 Have [HACS](https://hacs.xyz/) installed, this will allow you to update easily.

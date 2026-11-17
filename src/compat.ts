@@ -1,16 +1,13 @@
 export function getCustomElements(): CustomElementConstructor[] {
   // HA's scoped-registry polyfill exposes no public enumeration API.
-  const registry = customElements as CustomElementRegistry & { l?: unknown; h?: unknown }
-  for (const candidate of [registry.l, registry.h]) {
-    if (!(candidate instanceof Map)) continue
-    return [...candidate.keys()]
-      .filter((name): name is string => typeof name === "string")
-      .map((name) => customElements.get(name))
-      .filter(
-        (constructor): constructor is CustomElementConstructor => typeof constructor === "function"
-      )
-  }
-  return []
+  const names = Object.values(customElements)
+    .filter((value): value is Map<unknown, unknown> => value instanceof Map)
+    .flatMap((map) => [...map.keys()].filter((name): name is string => typeof name === "string"))
+  return [...new Set(names)]
+    .map((name) => customElements.get(name))
+    .filter(
+      (constructor): constructor is CustomElementConstructor => typeof constructor === "function"
+    )
 }
 
 export function getStylesCSS(styles: unknown): string {

@@ -1,6 +1,7 @@
 import type { ReactiveElement } from "lit"
 
 import { getCustomElements } from "./compat"
+import { patchSetConfig } from "./config"
 
 let installed = false
 
@@ -61,6 +62,7 @@ export class Patcher {
   patch(constructor: CustomElementConstructor) {
     if (!isLitClass(constructor) || this.patched.has(constructor)) return
     this.patched.add(constructor)
+    patchSetConfig(constructor.prototype)
     constructor.addInitializer((el: HTMLElement) => this._attach(el))
   }
 

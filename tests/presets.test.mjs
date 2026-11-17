@@ -53,7 +53,14 @@ Object.assign(globalThis, {
     createElement: () => new StyleElement(),
   },
 })
-const registry = new Map()
+let preloadedInitializers = 0
+class PreloadedCard extends ReactiveElement {
+  static addInitializer(initializer) {
+    preloadedInitializers++
+    super.addInitializer(initializer)
+  }
+}
+const registry = new Map([["preloaded-card", PreloadedCard]])
 const configEditor = {
   setConfig(config) {
     this.received = config
@@ -71,7 +78,12 @@ class Editor {
 Object.assign(globalThis, {
   customElements: {
     l: { keys: "not a registry" },
-    h: registry,
+    q: new Map([
+      ["preloaded-card", {}],
+      [42, {}],
+      ["missing-card", {}],
+    ]),
+    renamedRegistry: registry,
     get: (name) => registry.get(name),
     define: (name, klass) => registry.set(name, klass),
     whenDefined: (name) =>
@@ -173,6 +185,17 @@ class Card extends ReactiveElement {
   }
 }
 customElements.define("test-card", Card)
+class StatelessCard extends Card {
+  get _config() {
+    return undefined
+  }
+  setConfig(config, ...args) {
+    this.call = { receiver: this, args }
+    if (config.reject) throw config.reject
+    return args[0]
+  }
+}
+customElements.define("stateless-card", StatelessCard)
 const cards = []
 const originalCSSStyleSheet = globalThis.CSSStyleSheet
 class StyleSheet {
@@ -205,6 +228,10 @@ afterEach(() => {
 test("resource loaded before Styler is available on first render", async () => {
   const card = await mount({ styler: { preset: "early" } })
   assert.equal(card.css, "/* loaded before Styler */")
+})
+
+test("registry discovery tolerates renamed fields, duplicate names and unrelated maps", () => {
+  assert.equal(preloadedInitializers, 1)
 })
 
 test("no preset preserves existing card, local, tile and background behavior", async () => {
@@ -710,4 +737,129 @@ test("editor reuse clears removed Styler options and preserves tile animation", 
   })
   assert.equal(editor.received.styler, undefined)
   assert.equal(editor.received.animation, "next")
+})
+
+test("setConfig captures only Styler settings for cards that discard their configuration", async () => {
+  const card = new StatelessCard()
+  cards.push(card)
+  const result = {}
+  assert.equal(card.setConfig({ styler: { style: "/* captured */" } }, result, 42), result)
+  assert.equal(card.call.receiver, card)
+  assert.deepEqual(card.call.args, [result, 42])
+  await card.connect()
+  assert.equal(card.css, "/* captured */")
+  card.setConfig({ styler: { style: "/* changed */" } })
+  await card.updateComplete
+  assert.equal(card.css, "/* changed */")
+})
+
+test("captured removal is authoritative over a stale private config", async () => {
+  class StaleCard extends StatelessCard {
+    get _config() {
+      return { styler: { style: "/* stale */" } }
+    }
+  }
+  customElements.define("stale-config-card", StaleCard)
+  const card = new StaleCard()
+  cards.push(card)
+  await card.connect()
+  assert.equal(card.css, "/* stale */")
+  card.setConfig({})
+  await card.updateComplete
+  assert.equal(card.css, undefined)
+})
+
+test("every successful setConfig invalidates reused Styler objects", async () => {
+  const card = new StatelessCard()
+  cards.push(card)
+  await card.connect()
+  const config = { styler: { style: "/* first */" } }
+  card.setConfig(config)
+  await card.updateComplete
+  config.styler.style = "/* mutated */"
+  card.setConfig(config)
+  await card.updateComplete
+  assert.equal(card.css, "/* mutated */")
+})
+
+test("rejected configuration preserves the previous capture and exception", async () => {
+  class RejectingCard extends StatelessCard {
+    setConfig(config) {
+      super.setConfig({})
+      if (config.reject) throw config.reject
+    }
+  }
+  customElements.define("rejecting-config-card", RejectingCard)
+  const card = new RejectingCard()
+  cards.push(card)
+  await card.connect()
+  card.setConfig({ styler: { style: "/* accepted */" } })
+  await card.updateComplete
+  const error = new Error("invalid card configuration")
+  assert.throws(
+    () => card.setConfig({ styler: { style: "/* rejected */" }, reject: error }),
+    (e) => e === error
+  )
+  card.requestUpdate()
+  await card.updateComplete
+  assert.equal(card.css, "/* accepted */")
+})
+
+test("fallbacks try public config independently of throwing private getters", async () => {
+  class PublicCard extends Card {
+    get _config() {
+      throw new Error("private getter unavailable")
+    }
+  }
+  customElements.define("public-config-card", PublicCard)
+  const card = new PublicCard()
+  cards.push(card)
+  card.config = { styler: { style: "/* public */" } }
+  await card.connect()
+  assert.equal(card.css, "/* public */")
+  Object.defineProperty(card, "config", {
+    get: () => {
+      throw new Error("public getter unavailable")
+    },
+  })
+  card.requestUpdate()
+  await card.updateComplete
+  assert.equal(card.css, undefined)
+})
+
+test("captured ancestor settings refresh descendants without any stored card config", async () => {
+  const ancestor = new StatelessCard()
+  cards.push(ancestor)
+  await ancestor.connect()
+  const child = await mount({}, "HA-CARD", ancestor.shadowRoot)
+  ancestor.setConfig({ styler: { card: true } })
+  await ancestor.updateComplete
+  await child.updateComplete
+  assert.equal(child.style.background, "none")
+  ancestor.setConfig({})
+  await ancestor.updateComplete
+  await child.updateComplete
+  assert.equal(child.style.background, "")
+})
+
+test("instance-field setConfig replacements are wrapped on connect and remain idempotent", async () => {
+  class FieldCard extends StatelessCard {
+    setConfig = (_config) => {
+      this.count = (this.count ?? 0) + 1
+    }
+  }
+  customElements.define("field-config-card", FieldCard)
+  const card = new FieldCard()
+  cards.push(card)
+  await card.connect()
+  card.setConfig({ styler: { style: "/* field */" } })
+  await card.updateComplete
+  assert.equal(card.css, "/* field */")
+  assert.equal(card.count, 1)
+  card.disconnect()
+  await card.connect()
+  card.setConfig({})
+  await card.updateComplete
+  assert.equal(card.css, undefined)
+  assert.equal(card.count, 2)
 })

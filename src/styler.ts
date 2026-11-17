@@ -3,6 +3,7 @@ import "./editor"
 
 import { Patcher, isReactiveController } from "./patch"
 import { getStylesCSS } from "./compat"
+import { getStylerConfig, observeConfig, patchSetConfig } from "./config"
 import { getPresetCSS } from "./presets"
 import { applyCSS } from "./styles"
 import { suppressCard } from "./suppression"
@@ -20,7 +21,7 @@ function parent(node: Node): Node | null {
 
 function inheritedCard(card: Card): boolean | undefined {
   for (let node = parent(card); node; node = parent(node)) {
-    const value = (node as Card)._config?.styler?.card
+    const value = getStylerConfig(node)?.card
     if (value !== undefined) return value
   }
 }
@@ -44,9 +45,8 @@ function isPreview(node: Node): boolean {
   return false
 }
 
-function applyStyles(card: Card) {
+function applyStyles(card: Card, config: StylerConfig | undefined) {
   const state = (card._styler ??= {})
-  const config = card._config?.styler
   state.card = config?.card
   state.preset = config?.preset
   state.style = config?.style
@@ -78,8 +78,10 @@ function attach(re: HTMLElement) {
     dirty = true
     card.requestUpdate()
   }
+  observeConfig(card, refresh)
   card.addController({
     hostConnected() {
+      patchSetConfig(card)
       connected.set(card, refresh)
       refresh()
     },
@@ -90,7 +92,7 @@ function attach(re: HTMLElement) {
     },
     hostUpdated() {
       if (!card.isConnected) return
-      const nextConfig = card._config?.styler
+      const nextConfig = getStylerConfig(card)
       const preset = nextConfig?.preset
       const usesPresets = typeof preset === "string" || (Array.isArray(preset) && preset.length > 0)
       if (usesPresets !== listening) {
@@ -109,7 +111,7 @@ function attach(re: HTMLElement) {
         previousParent !== nextParent ||
         (card.editMode && isPreview(card))
       ) {
-        applyStyles(card)
+        applyStyles(card, nextConfig)
         dirty = false
       }
       config = nextConfig

@@ -42,6 +42,14 @@ Keep the bundle-level tests: they cover global patching, preset updates, listene
 cleanup, stylesheet ownership, fallback styles, and editor round trips. Add
 regressions when changing these behaviors.
 
+Configuration capture lives in `src/config.ts`. Its WeakMap retains only the
+`styler` block, and an entry with `undefined` prevents stale fallback settings
+from reappearing. Prototype methods are intercepted before new instances are
+created; instance-field replacements are checked after construction and on
+connection. An instance-field method called synchronously before either check
+cannot be intercepted, so its initial settings require an accessible fallback or
+a later `setConfig()` call. Do not probe config getters during Lit initializers.
+
 `pnpm test:browser` builds the plugin and runs focused Chromium rendering tests for
 native custom-element registration, nested Lit styles, inherited styling,
 reparenting, inline-style restoration, tile animations, stylesheet reuse, DOM

@@ -22,7 +22,6 @@ export type StylerState = StylerConfig & {
 }
 
 export type Card = LitElement & {
-  _config?: Record<string, unknown> & { styler?: StylerConfig }
   editMode?: boolean
   getCardSize?: () => number | undefined
   getGridSize?: () => [number, number] | undefined

@@ -9,12 +9,18 @@ async function settle(...cards) {
   for (let i = 0; i < 3; i++) await Promise.all(cards.map((card) => card.updateComplete))
 }
 function configure(card, config) {
-  card._config = config
-  card.requestUpdate()
+  card.setConfig(config)
 }
 
 try {
   class HaCard extends ReactiveElement {
+    get _config() {
+      throw new Error("private getter unavailable")
+    }
+    setConfig(config) {
+      this.config = config
+      this.requestUpdate()
+    }
     static styles = [
       css`
         :host {
@@ -31,7 +37,9 @@ try {
       ],
     ]
   }
-  class Stack extends ReactiveElement {}
+  class Stack extends ReactiveElement {
+    setConfig(_config) {}
+  }
   const configElement = {
     setConfig(config) {
       this.received = config
@@ -56,11 +64,16 @@ try {
   document.body.append(stack)
   await stack.updateComplete
   const card = new HaCard()
+  card.setConfig({ styler: { style: ":host { color: rgb(0, 0, 255); }" } })
   stack.shadowRoot.append(card)
   await card.updateComplete
   await import("/dist/styler.js")
   await settle(stack, card)
   assert(!!card._styler, "existing native-registry card was attached")
+  assert(
+    getComputedStyle(card).color === "rgb(0, 0, 255)",
+    "preloaded public config fallback works"
+  )
 
   configure(stack, { styler: { card: true } })
   await settle(stack, card)
@@ -115,6 +128,7 @@ try {
   assert(card.style.background === "green", "reparenting restores owned inline styling")
 
   class Tile extends ReactiveElement {
+    setConfig(_config) {}
     createRenderRoot() {
       const root = super.createRenderRoot()
       root.innerHTML =
@@ -134,7 +148,15 @@ try {
   tile.requestUpdate()
   await settle(tile)
   assert(tile._styler.styleSheet === sheet, "unchanged sheet reused")
-  configure(tile, { styler: { animation: "fade" } })
+  const tileConfig = { styler: { animation: "pulse" } }
+  configure(tile, tileConfig)
+  await settle(tile)
+  assert(
+    getComputedStyle(icon.parentElement).animationName === "pulse",
+    "captured config works without storage"
+  )
+  tileConfig.styler.animation = "fade"
+  configure(tile, tileConfig)
   await settle(tile)
   assert(getComputedStyle(icon).animationName === "none", "old animation removed")
   assert(
