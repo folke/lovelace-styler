@@ -32,7 +32,9 @@ void customElements.whenDefined("hui-card-element-editor").then((el) => {
         info: newConfig.info,
         animation: newConfig.animation,
       }
-      Object.keys(this._stylerConfig).forEach((key) => delete newConfig[key])
+      delete newConfig.styler
+      delete newConfig.info
+      delete newConfig.animation
       orig(newConfig)
     })
     return configEl

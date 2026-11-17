@@ -36,7 +36,7 @@ function isPreview(node?: Node): boolean {
 
   const card = node as Card
 
-  if (card.tagName == "HUI-CARD-PREVIEW") return true
+  if (card.tagName === "HUI-CARD-PREVIEW") return true
 
   const parentNode =
     node instanceof ShadowRoot ? node.host : (node.parentElement ?? node.parentNode ?? undefined)
@@ -64,7 +64,7 @@ function applyStyles(card: Card, force: boolean) {
   // Do we have any custom styles to apply?
   if (state.style) css.push(state.style)
 
-  if (card.tagName.toLowerCase() == "hui-tile-card") {
+  if (card.tagName.toLowerCase() === "hui-tile-card") {
     css.push(...getTileCardCSS(card as TileCard))
   }
 
@@ -73,9 +73,9 @@ function applyStyles(card: Card, force: boolean) {
   applyCSS(card.shadowRoot, state, cssText)
 
   if (isPreviewMode && card.style) {
-    if (card.style.border == "none") card.style.border = ""
-    if (card.style.boxShadow == "none") card.style.boxShadow = ""
-    if (card.style.background == "none") card.style.background = ""
+    if (card.style.border === "none") card.style.border = ""
+    if (card.style.boxShadow === "none") card.style.boxShadow = ""
+    if (card.style.background === "none") card.style.background = ""
   }
 
   // Remove the card styles if either:
@@ -83,7 +83,7 @@ function applyStyles(card: Card, force: boolean) {
   // - the parent doesn't want to be styled as a card
   // - the card itself doesn't want to be styled as a card
   if (
-    card.tagName == "HA-CARD" &&
+    card.tagName === "HA-CARD" &&
     (state.card === false || state.parent_card || state.parent_card === false)
   ) {
     card.style.border = "none"

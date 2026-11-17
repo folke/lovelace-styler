@@ -4,5 +4,10 @@
   "printWidth": 100,
   "trailingComma": "es5",
   "sortPackageJson": false,
-  "ignorePatterns": ["dist/**", "pnpm-lock.yaml", "CHANGELOG.md"]
+  "ignorePatterns": [
+    "dist/**",
+    "pnpm-lock.yaml",
+    "CHANGELOG.md",
+    ".github/release-please-manifest.json"
+  ]
 }

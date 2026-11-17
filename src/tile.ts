@@ -19,7 +19,7 @@ export function getTileCardCSS(card: TileCard): string[] {
       }
     `)
 
-  if (card._config?.animation == "spin")
+  if (card._config?.animation === "spin")
     css.push(`
       @keyframes spin {
         from {transform: rotate(0deg);}
@@ -28,7 +28,7 @@ export function getTileCardCSS(card: TileCard): string[] {
       ha-tile-icon[data-state="on"] ha-state-icon {animation: spin 2s linear infinite;}
     `)
 
-  if (card._config?.animation == "pulse")
+  if (card._config?.animation === "pulse")
     css.push(`
       @keyframes pulse {
         0% {opacity: 1;}
@@ -38,7 +38,7 @@ export function getTileCardCSS(card: TileCard): string[] {
       ha-tile-icon[data-state="on"] {animation: pulse 1s linear infinite;}
     `)
 
-  if (card._config?.animation == "fade")
+  if (card._config?.animation === "fade")
     css.push(`
       @keyframes fade {
         0% {opacity: 1;}

@@ -433,11 +433,13 @@ shared resource update the common design for every room after a browser refresh.
 Requires Node.js 22.12+ and pnpm (version pinned in `package.json`).
 
 ```sh
-pnpm install
-pnpm lint
+pnpm install --frozen-lockfile
 pnpm check
+pnpm lint
 pnpm format:check
 pnpm test # builds the plugin and runs regression tests
 ```
 
-Use `pnpm lint:fix` and `pnpm format` to apply fixes.
+Use `pnpm lint:fix` and `pnpm format` to apply fixes, or `pnpm watch` to rebuild on
+changes. See [Contributing](CONTRIBUTING.md) for testing and local deployment, and
+[Releases](docs/releases.md) for release automation and recovery.
