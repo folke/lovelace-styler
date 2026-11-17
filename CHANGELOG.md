@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.0.0](https://github.com/folke/lovelace-styler/compare/v3.2.1...v4.0.0) (2026-11-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* configure tile animations with styler.animation. Top-level animation and info are no longer interpreted, and spin_icon has been removed.
+
+### Features
+
+* simplify tile options and fix styling lifecycle ([fd540d1](https://github.com/folke/lovelace-styler/commit/fd540d18d7947ad25061315489329a362934952d))
+
+
+### Bug Fixes
+
+* capture Styler configuration and tolerate registry field renames ([b457735](https://github.com/folke/lovelace-styler/commit/b4577350960a6189b931d1d720f2e8b26f127636))
+
 ## [3.2.1](https://github.com/folke/lovelace-styler/compare/v3.2.0...v3.2.1) (2026-11-10)
 
 
