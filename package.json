@@ -9,6 +9,7 @@
     "watch": "vite build --watch",
     "check": "tsc",
     "test": "pnpm build && node --test tests/*.test.mjs",
+    "test:browser": "pnpm build && node tests/browser.mjs",
     "lint": "oxlint --deny-warnings",
     "lint:fix": "pnpm run lint --fix",
     "format": "oxfmt --write .",

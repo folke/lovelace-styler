@@ -7,6 +7,7 @@ and [Releases](docs/releases.md) for maintainer release instructions.
 
 - Node.js **22.12+** and the pnpm version declared in `package.json`.
 - CI uses Node.js **24**; `.node-version` selects the same major for local development.
+- Chromium for `pnpm test:browser`; set `CHROME_BIN` if its executable is not `chromium`.
 
 ## Development
 
@@ -16,6 +17,7 @@ pnpm check
 pnpm lint
 pnpm format:check
 pnpm test
+pnpm test:browser
 ```
 
 `pnpm test` builds `dist/styler.js` before running the regression suite, so no
@@ -40,10 +42,17 @@ Keep the bundle-level tests: they cover global patching, preset updates, listene
 cleanup, stylesheet ownership, fallback styles, and editor round trips. Add
 regressions when changing these behaviors.
 
-These are not browser rendering tests. Also test changes in a live Home Assistant
-dashboard, especially native editor integration, shadow roots, and constructed
-stylesheets. Preserve fallback styling for browsers without constructed sheets and
-CSS containing `@import`.
+`pnpm test:browser` builds the plugin and runs focused Chromium rendering tests for
+native custom-element registration, nested Lit styles, inherited styling,
+reparenting, inline-style restoration, tile animations, stylesheet reuse, DOM
+fallbacks, and editor reuse. It bundles the fixture with Vite and requires no
+additional JavaScript dependencies. These tests still mock Home Assistant's card
+and editor components; also test changes in a live dashboard.
+
+Preserve fallback styling for browsers without constructed sheets and CSS
+containing `@import`. The tile animation API is `styler.animation`; top-level
+`animation`, `info`, and `spin_icon` are no longer interpreted by Styler. See the
+README migration notes.
 
 ## Local Deployment
 
