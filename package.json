@@ -2,7 +2,7 @@
   "name": "styler",
   "version": "4.1.0",
   "author": "Folke Lemaitre",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "build": "vite build",
