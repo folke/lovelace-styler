@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.1](https://github.com/folke/lovelace-styler/compare/v4.1.0...v4.1.1) (2026-11-19)
+
+
+### Bug Fixes
+
+* align package license with Apache-2.0 ([c9eb653](https://github.com/folke/lovelace-styler/commit/c9eb653ad7b356263bd7d4485887bc746018f56a))
+
 ## [4.1.0](https://github.com/folke/lovelace-styler/compare/v4.0.0...v4.1.0) (2026-11-17)
 
 
