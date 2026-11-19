@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.0](https://github.com/folke/lovelace-styler/compare/v4.0.0...v4.1.0) (2026-11-17)
+
+
+### Features
+
+* support state-aware heading badge animations ([0a382ef](https://github.com/folke/lovelace-styler/commit/0a382ef26bd5e5ac9ba503cd2d88e8a97e032169))
+
 ## [4.0.0](https://github.com/folke/lovelace-styler/compare/v3.2.1...v4.0.0) (2026-11-17)
 
 
