@@ -18,9 +18,9 @@
   "devDependencies": {
     "@types/node": "26.6.6",
     "lit": "3.3.3",
-    "oxfmt": "0.78.0",
-    "oxlint": "1.93.0",
-    "oxlint-tsgolint": "^7.0.2007",
+    "oxfmt": "0.79.0",
+    "oxlint": "1.94.0",
+    "oxlint-tsgolint": "^7.0.2008",
     "typescript": "7.0.2",
     "vite": "8.3.8"
   },
